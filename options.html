@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Version Extension Options</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 600px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 3px;
+      display: none;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .example {
+      font-style: italic;
+      color: #666;
+      font-size: 0.9em;
+    }
+    .mapping-item {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mapping-info {
+      flex-grow: 1;
+    }
+    .mapping-pattern {
+      font-weight: bold;
+      color: #495057;
+    }
+    .mapping-repo {
+      color: #6c757d;
+      font-size: 0.9em;
+    }
+    .delete-mapping {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .delete-mapping:hover {
+      background-color: #c82333;
+    }
+    .mapping-input {
+      border-top: 1px solid #dee2e6;
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Version Extension Settings</h1>
+
+  <div class="section">
+    <h3>Meta Tag Selector</h3>
+    <p>For HTML pages, specify the meta tag name to look for git SHAs.</p>
+    <label for="metaTagSelector">Meta Tag Name:</label>
+    <input type="text" id="metaTagSelector" placeholder="git-sha">
+    <div class="example">Looks for &lt;meta name="git-sha" content="abc123..."&gt;</div>
+    <button id="saveMetaTag">Save</button>
+  </div>
+
+  <div class="section">
+    <h3>URL to GitHub Repository Mappings</h3>
+    <p>Configure which GitHub repository to use for specific URLs or URL patterns.</p>
+    
+    <div id="mappings">
+      <!-- Mappings will be added here dynamically -->
+    </div>
+    
+    <div class="mapping-input">
+      <label for="urlPattern">URL Pattern:</label>
+      <input type="text" id="urlPattern" placeholder="api.pallet.com" style="margin-bottom: 10px;">
+      <div class="example">Match URLs containing this text (e.g., "api.pallet.com" matches "https://api.pallet.com/version")</div>
+      
+      <label for="githubRepo">GitHub Repository URL:</label>
+      <input type="text" id="githubRepo" placeholder="https://github.com/username/repository">
+      <div class="example">Example: https://github.com/octocat/Hello-World</div>
+      
+      <button id="addMapping">Add Mapping</button>
+    </div>
+  </div>
+  
+  <div id="status" class="status"></div>
+  
+  <div class="section">
+    <h3>How it works:</h3>
+    <p>This extension detects git commit SHAs from:</p>
+    <ul>
+      <li><strong>JSON pages:</strong> Looks for a "version" field in the JSON</li>
+      <li><strong>HTML pages:</strong> Looks for a meta tag with the configured name</li>
+    </ul>
+    <p>When a version is detected:</p>
+    <ol>
+      <li>The current URL is matched against your configured patterns</li>
+      <li>A link is created to view that commit on the matching GitHub repository</li>
+      <li>The link is displayed in the extension popup</li>
+    </ol>
+    <p>The GitHub URL will be constructed as: <code>[matching-repo]/commit/[version-value]</code></p>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>
