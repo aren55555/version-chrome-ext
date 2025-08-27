@@ -1,8 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Version Extension",
-  "version": "1.0",
-  "description": "Inspects JSON pages for version info and links to GitHub commits",
+  "name": "JSON Version to GitHub",
+  "version": "1.0.0",
+  "description": "Automatically detects version information in JSON pages and creates direct links to GitHub commits. Perfect for API endpoints and version tracking.",
+  "author": "Aren Patel",
+  "homepage_url": "https://github.com/aren55555/version-chrome-ext",
   "permissions": [
     "activeTab",
     "storage"
@@ -15,7 +17,12 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Version Extension"
+    "default_title": "JSON Version to GitHub"
   },
-  "options_page": "options.html"
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }
