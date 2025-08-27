@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Version Extension Options</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 600px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 3px;
+      display: none;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .example {
+      font-style: italic;
+      color: #666;
+      font-size: 0.9em;
+    }
+    .mapping-item {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mapping-info {
+      flex-grow: 1;
+    }
+    .mapping-pattern {
+      font-weight: bold;
+      color: #495057;
+    }
+    .mapping-repo {
+      color: #6c757d;
+      font-size: 0.9em;
+    }
+    .delete-mapping {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .delete-mapping:hover {
+      background-color: #c82333;
+    }
+    .mapping-input {
+      border-top: 1px solid #dee2e6;
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Version Extension Settings</h1>
+  
+  <div class="section">
+    <h3>URL to GitHub Repository Mappings</h3>
+    <p>Configure which GitHub repository to use for specific URLs or URL patterns.</p>
+    
+    <div id="mappings">
+      <!-- Mappings will be added here dynamically -->
+    </div>
+    
+    <div class="mapping-input">
+      <label for="urlPattern">URL Pattern:</label>
+      <input type="text" id="urlPattern" placeholder="api.pallet.com" style="margin-bottom: 10px;">
+      <div class="example">Match URLs containing this text (e.g., "api.pallet.com" matches "https://api.pallet.com/version")</div>
+      
+      <label for="githubRepo">GitHub Repository URL:</label>
+      <input type="text" id="githubRepo" placeholder="https://github.com/username/repository">
+      <div class="example">Example: https://github.com/octocat/Hello-World</div>
+      
+      <button id="addMapping">Add Mapping</button>
+    </div>
+  </div>
+  
+  <div id="status" class="status"></div>
+  
+  <div class="section">
+    <h3>How it works:</h3>
+    <p>When you visit a page that contains JSON with a "version" field, this extension will:</p>
+    <ol>
+      <li>Detect the version value (assumed to be a git commit SHA)</li>
+      <li>Match the current URL against your configured patterns</li>
+      <li>Create a link to view that specific commit on the matching GitHub repository</li>
+      <li>Display the link in the extension popup</li>
+    </ol>
+    <p>The GitHub URL will be constructed as: <code>[matching-repo]/commit/[version-value]</code></p>
+    <p><strong>Example:</strong> Pattern "api.pallet.com" will match any URL containing that text, like "https://api.pallet.com/version"</p>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>

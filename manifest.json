@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Version Extension",
+  "version": "1.0",
+  "description": "Inspects JSON pages for version info and links to GitHub commits",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Version Extension"
+  },
+  "options_page": "options.html"
+}
