@@ -1,6 +1,6 @@
 # JSON Version to GitHub Chrome Extension
 
-(Link)[https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb]
+[Link](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb)
 
 A Chrome extension that detects version information in JSON pages and creates direct links to GitHub commits. Perfect for API version tracking and development workflow automation.
 
@@ -15,6 +15,14 @@ A Chrome extension that detects version information in JSON pages and creates di
 
 1. The extension scans web pages for JSON content
 2. When a `version` field is detected, it extracts the value
+
+```json
+{
+  "version": "<sha here>",
+  ...
+}
+```
+
 3. Based on your configured URL patterns, it matches the current page to a GitHub repository
 4. Creates a direct link to the specific commit: `[repo]/commit/[version]`
 
