@@ -2,6 +2,8 @@
 
 [Link](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb)
 
+![Screenshot](docs/screen.jpg)
+
 A Chrome extension that detects version information in JSON pages and creates direct links to GitHub commits. Perfect for API version tracking and development workflow automation.
 
 ## Features
