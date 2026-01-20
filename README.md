@@ -43,10 +43,10 @@ A Chrome extension that detects version information in JSON pages and creates di
 
 ### Example Configuration
 
-- **URL Pattern**: `api.pallet.com`
-- **GitHub Repository**: `https://github.com/username/pallet-api`
+- **URL Pattern**: `api.example.com`
+- **GitHub Repository**: `https://github.com/username/repo`
 
-This will match any URL containing "api.pallet.com" and create GitHub links to the pallet-api repository.
+This will match any URL containing "api.example.com" and create GitHub links to the repository.
 
 ## File Structure
 

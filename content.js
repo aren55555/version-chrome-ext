@@ -20,8 +20,9 @@ function inspectPageForVersion(metaTagSelector) {
 
   // If no JSON version found and we have a meta tag selector, try that
   if (!version && metaTagSelector) {
-    const selector = `meta[name="${metaTagSelector}"]`;
-    const metaTag = document.querySelector(selector);
+    // Try both name and property attributes (some sites use property instead of name)
+    const metaTag = document.querySelector(`meta[name="${metaTagSelector}"]`) ||
+                    document.querySelector(`meta[property="${metaTagSelector}"]`);
     if (metaTag) {
       const content = metaTag.getAttribute('content');
       if (content) {
@@ -34,10 +35,32 @@ function inspectPageForVersion(metaTagSelector) {
   return { version, source };
 }
 
+function findConfigForUrl(url, mappings) {
+  // Handle new format: repo -> array of patterns
+  for (const [repo, patterns] of Object.entries(mappings)) {
+    if (Array.isArray(patterns)) {
+      for (const patternConfig of patterns) {
+        if (url.includes(patternConfig.pattern)) {
+          return patternConfig;
+        }
+      }
+    } else {
+      // Handle old format for backwards compatibility
+      if (url.includes(repo)) {
+        return typeof patterns === 'object' ? patterns : null;
+      }
+    }
+  }
+  return null;
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'getVersionInfo') {
-    chrome.storage.sync.get(['metaTagSelector'], function(result) {
-      const versionInfo = inspectPageForVersion(result.metaTagSelector);
+    chrome.storage.sync.get(['urlMappings'], function(result) {
+      const mappings = result.urlMappings || {};
+      const config = findConfigForUrl(window.location.href, mappings);
+      const metaTagSelector = config ? config.metaTag : null;
+      const versionInfo = inspectPageForVersion(metaTagSelector);
       sendResponse(versionInfo);
     });
     return true; // Keep channel open for async response
@@ -48,8 +71,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-chrome.storage.sync.get(['metaTagSelector'], function(result) {
-  const versionInfo = inspectPageForVersion(result.metaTagSelector);
+chrome.storage.sync.get(['urlMappings'], function(result) {
+  const mappings = result.urlMappings || {};
+  const config = findConfigForUrl(window.location.href, mappings);
+  const metaTagSelector = config ? config.metaTag : null;
+  const versionInfo = inspectPageForVersion(metaTagSelector);
   if (versionInfo.version) {
     chrome.runtime.sendMessage({
       action: 'versionDetected',

@@ -17,8 +17,12 @@
     }
     label {
       display: block;
+      margin-top: 16px;
       margin-bottom: 5px;
       font-weight: bold;
+    }
+    label:first-child {
+      margin-top: 0;
     }
     input[type="text"] {
       width: 100%;
@@ -55,44 +59,112 @@
       font-style: italic;
       color: #666;
       font-size: 0.9em;
+      margin-top: 4px;
     }
-    .mapping-item {
+    .required {
+      color: #dc3545;
+    }
+    .repo-group {
       background-color: #f8f9fa;
       border: 1px solid #dee2e6;
       border-radius: 4px;
-      padding: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .repo-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 10px 12px;
+      background-color: #e9ecef;
+      border-bottom: 1px solid #dee2e6;
     }
-    .mapping-info {
-      flex-grow: 1;
-    }
-    .mapping-pattern {
+    .repo-url {
       font-weight: bold;
-      color: #495057;
+      color: #0366d6;
+      text-decoration: none;
+      word-break: break-all;
     }
-    .mapping-repo {
-      color: #6c757d;
-      font-size: 0.9em;
+    .repo-url:hover {
+      text-decoration: underline;
     }
-    .delete-mapping {
+    .delete-repo {
       background-color: #dc3545;
       color: white;
       border: none;
-      padding: 5px 10px;
+      padding: 4px 8px;
       border-radius: 3px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-left: 10px;
     }
-    .delete-mapping:hover {
+    .delete-repo:hover {
       background-color: #c82333;
+    }
+    .patterns-list {
+      padding: 8px 12px;
+    }
+    .pattern-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      background-color: white;
+      border: 1px solid #e9ecef;
+      border-radius: 3px;
+    }
+    .pattern-item:last-child {
+      margin-bottom: 0;
+    }
+    .pattern-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pattern-text {
+      color: #495057;
+      font-family: monospace;
+    }
+    .source-info {
+      color: #17a2b8;
+      font-size: 0.8em;
+    }
+    .delete-pattern {
+      background-color: transparent;
+      color: #dc3545;
+      border: none;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .delete-pattern:hover {
+      color: #a71d2a;
     }
     .mapping-input {
       border-top: 1px solid #dee2e6;
       padding-top: 15px;
       margin-top: 15px;
+    }
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 5px;
+    }
+    .radio-label {
+      display: inline-flex;
+      align-items: center;
+      font-weight: normal;
+      margin: 0;
+      cursor: pointer;
+    }
+    .radio-label input[type="radio"] {
+      margin-right: 6px;
+    }
+    .source-options {
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -100,31 +172,46 @@
   <h1>Version Extension Settings</h1>
 
   <div class="section">
-    <h3>Meta Tag Selector</h3>
-    <p>For HTML pages, specify the meta tag name to look for git SHAs.</p>
-    <label for="metaTagSelector">Meta Tag Name:</label>
-    <input type="text" id="metaTagSelector" placeholder="git-sha">
-    <div class="example">Looks for &lt;meta name="git-sha" content="abc123..."&gt;</div>
-    <button id="saveMetaTag">Save</button>
-  </div>
-
-  <div class="section">
     <h3>URL to GitHub Repository Mappings</h3>
     <p>Configure which GitHub repository to use for specific URLs or URL patterns.</p>
-    
+
     <div id="mappings">
       <!-- Mappings will be added here dynamically -->
     </div>
-    
+
     <div class="mapping-input">
-      <label for="urlPattern">URL Pattern:</label>
-      <input type="text" id="urlPattern" placeholder="api.pallet.com" style="margin-bottom: 10px;">
-      <div class="example">Match URLs containing this text (e.g., "api.pallet.com" matches "https://api.pallet.com/version")</div>
-      
-      <label for="githubRepo">GitHub Repository URL:</label>
-      <input type="text" id="githubRepo" placeholder="https://github.com/username/repository">
+      <label for="githubRepo">GitHub Repository URL <span class="required">*</span></label>
+      <input type="text" id="githubRepo" placeholder="https://github.com/username/repository" required>
       <div class="example">Example: https://github.com/octocat/Hello-World</div>
-      
+
+      <label for="urlPattern">URL Pattern <span class="required">*</span></label>
+      <input type="text" id="urlPattern" placeholder="api.example.com" required>
+      <div class="example">Match URLs containing this text (e.g., "api.example.com" matches "https://api.example.com/version")</div>
+
+      <label>Source Type <span class="required">*</span></label>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="sourceType" value="json" checked>
+          JSON
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="sourceType" value="html">
+          HTML
+        </label>
+      </div>
+
+      <div id="jsonOptions" class="source-options">
+        <label for="jsonPath">JSONPath <span class="required">*</span></label>
+        <input type="text" id="jsonPath" value="$.version">
+        <div class="example">JSONPath to the git SHA field (e.g., "$.version" or "$.git.commit")</div>
+      </div>
+
+      <div id="htmlOptions" class="source-options" style="display: none;">
+        <label for="metaTagName">Meta Tag Name <span class="required">*</span></label>
+        <input type="text" id="metaTagName" placeholder="git-sha">
+        <div class="example">Looks for &lt;meta name="git-sha" content="abc123..."&gt;</div>
+      </div>
+
       <button id="addMapping">Add Mapping</button>
     </div>
   </div>
@@ -135,7 +222,7 @@
     <h3>How it works:</h3>
     <p>This extension detects git commit SHAs from:</p>
     <ul>
-      <li><strong>JSON pages:</strong> Looks for a "version" field in the JSON</li>
+      <li><strong>JSON pages:</strong> Uses the configured JSONPath to find the git SHA</li>
       <li><strong>HTML pages:</strong> Looks for a meta tag with the configured name</li>
     </ul>
     <p>When a version is detected:</p>

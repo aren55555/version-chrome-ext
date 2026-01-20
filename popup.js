@@ -51,9 +51,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function findMatchingRepo(url, mappings) {
-    for (const [pattern, repo] of Object.entries(mappings)) {
-      if (url.includes(pattern)) {
-        return repo;
+    // Handle new format: repo -> array of patterns
+    for (const [repo, patterns] of Object.entries(mappings)) {
+      if (Array.isArray(patterns)) {
+        for (const patternConfig of patterns) {
+          if (url.includes(patternConfig.pattern)) {
+            return repo;
+          }
+        }
+      } else {
+        // Handle old format for backwards compatibility
+        if (url.includes(repo)) {
+          return typeof patterns === 'string' ? patterns : patterns.repo;
+        }
       }
     }
     return null;
