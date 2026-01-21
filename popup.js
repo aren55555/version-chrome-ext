@@ -11,18 +11,24 @@ document.addEventListener('DOMContentLoaded', function() {
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {action: 'getVersionInfo'}, function(response) {
       if (chrome.runtime.lastError) {
-        statusText.textContent = 'Unable to check this page';
+        statusText.textContent = 'No URL pattern matched for this page';
         statusText.className = 'no-version';
         return;
       }
 
       if (response && response.version) {
         displayVersionInfo(response.version, response.source);
+      } else if (response && response.urlMatched) {
+        const sourceHint = response.expectedSource === 'html'
+          ? `meta tag: ${response.expectedSelector}`
+          : `JSON path: ${response.expectedSelector}`;
+        statusText.textContent = `URL matched, but no version found in ${sourceHint}`;
+        statusText.className = 'no-version';
       } else if (response && response.source === 'json') {
         statusText.textContent = 'JSON page found, but no "version" field detected';
         statusText.className = 'no-version';
       } else {
-        statusText.textContent = 'No version info found on this page';
+        statusText.textContent = 'No URL pattern configured for this page';
         statusText.className = 'no-version';
       }
     });

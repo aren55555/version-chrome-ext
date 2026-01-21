@@ -130,9 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
       for (const patternConfig of patterns) {
         let sourceInfo = '';
         if (patternConfig.sourceType === 'html' && patternConfig.metaTag) {
-          sourceInfo = `<span class="source-info">HTML meta: ${patternConfig.metaTag}</span>`;
+          sourceInfo = `<span class="source-info">HTML meta tag name: <span class="source-value">${patternConfig.metaTag}</span></span>`;
         } else {
-          sourceInfo = `<span class="source-info">JSON: ${patternConfig.jsonPath || '$.version'}</span>`;
+          sourceInfo = `<span class="source-info">JSONPath: <span class="source-value">${patternConfig.jsonPath || '$.version'}</span></span>`;
         }
 
         const patternDiv = document.createElement('div');

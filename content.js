@@ -61,6 +61,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const config = findConfigForUrl(window.location.href, mappings);
       const metaTagSelector = config ? config.metaTag : null;
       const versionInfo = inspectPageForVersion(metaTagSelector);
+      versionInfo.urlMatched = !!config;
+      versionInfo.expectedSource = config ? config.sourceType : null;
+      versionInfo.expectedSelector = config ? (config.metaTag || config.jsonPath) : null;
       sendResponse(versionInfo);
     });
     return true; // Keep channel open for async response
