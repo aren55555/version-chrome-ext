@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const isWatch = process.argv.includes('--watch');
 
 const entries = ['content', 'popup', 'options'];
 
@@ -13,6 +14,7 @@ for (const entry of entries) {
     build: {
       outDir: 'dist',
       emptyOutDir: entry === 'content',
+      watch: isWatch ? {} : null,
       lib: {
         entry: resolve(__dirname, `src/${entry}.ts`),
         name: entry,

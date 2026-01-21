@@ -1,4 +1,5 @@
-import { parseUrlMappings, parseStorageData, UrlMappings, PatternConfig } from './schemas';
+import { z } from 'zod';
+import { parseUrlMappings, StorageDataSchema, UrlMappings, PatternConfig } from './schemas';
 
 document.addEventListener('DOMContentLoaded', function() {
   const urlPatternInput = document.getElementById('urlPattern') as HTMLInputElement;
@@ -252,13 +253,23 @@ document.addEventListener('DOMContentLoaded', function() {
     reader.onload = function(e) {
       try {
         const data = JSON.parse(e.target?.result as string);
-        const validated = parseStorageData(data);
+        const validated = StorageDataSchema.parse(data);
         chrome.storage.sync.set({ urlMappings: validated.urlMappings }, function() {
           showStatus('Configuration imported!', true);
           loadMappings();
         });
-      } catch {
-        showStatus('Invalid configuration file format', false);
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          showStatus('Invalid JSON file', false);
+        } else if (err instanceof z.ZodError) {
+          const messages = err.issues.map(issue => {
+            const path = issue.path.join('.');
+            return path ? `${path}: ${issue.message}` : issue.message;
+          });
+          showStatus(`Validation errors: ${messages.join('; ')}`, false);
+        } else {
+          showStatus('Invalid configuration file format', false);
+        }
       }
     };
     reader.readAsText(file);
