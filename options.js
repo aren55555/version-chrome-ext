@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const sourceTypeRadios = document.querySelectorAll('input[name="sourceType"]');
   const jsonOptions = document.getElementById('jsonOptions');
   const htmlOptions = document.getElementById('htmlOptions');
+  const exportButton = document.getElementById('exportConfig');
+  const importButton = document.getElementById('importConfig');
+  const importFileInput = document.getElementById('importFile');
+
+  exportButton.addEventListener('click', exportConfiguration);
+  importButton.addEventListener('click', () => importFileInput.click());
+  importFileInput.addEventListener('change', importConfiguration);
 
   sourceTypeRadios.forEach(radio => {
     radio.addEventListener('change', function() {
@@ -254,5 +261,45 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
       statusDiv.style.display = 'none';
     }, 3000);
+  }
+
+  function exportConfiguration() {
+    chrome.storage.sync.get(['urlMappings'], function(result) {
+      const mappings = migrateOldFormat(result.urlMappings || {});
+      const json = JSON.stringify({ urlMappings: mappings }, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'version-extension-config.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showStatus('Configuration exported!', true);
+    });
+  }
+
+  function importConfiguration(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.urlMappings || typeof data.urlMappings !== 'object') {
+          showStatus('Invalid configuration file', false);
+          return;
+        }
+
+        chrome.storage.sync.set({ urlMappings: data.urlMappings }, function() {
+          showStatus('Configuration imported!', true);
+          loadMappings();
+        });
+      } catch (err) {
+        showStatus('Failed to parse configuration file', false);
+      }
+    };
+    reader.readAsText(file);
+    importFileInput.value = '';
   }
 });
