@@ -1,24 +1,26 @@
+import { parseUrlMappings, parseStorageData, UrlMappings, PatternConfig } from './schemas';
+
 document.addEventListener('DOMContentLoaded', function() {
-  const urlPatternInput = document.getElementById('urlPattern');
-  const githubRepoInput = document.getElementById('githubRepo');
-  const metaTagInput = document.getElementById('metaTagName');
-  const jsonPathInput = document.getElementById('jsonPath');
-  const addMappingButton = document.getElementById('addMapping');
-  const mappingsDiv = document.getElementById('mappings');
-  const statusDiv = document.getElementById('status');
-  const sourceTypeRadios = document.querySelectorAll('input[name="sourceType"]');
-  const jsonOptions = document.getElementById('jsonOptions');
-  const htmlOptions = document.getElementById('htmlOptions');
-  const exportButton = document.getElementById('exportConfig');
-  const importButton = document.getElementById('importConfig');
-  const importFileInput = document.getElementById('importFile');
+  const urlPatternInput = document.getElementById('urlPattern') as HTMLInputElement;
+  const githubRepoInput = document.getElementById('githubRepo') as HTMLInputElement;
+  const metaTagInput = document.getElementById('metaTagName') as HTMLInputElement;
+  const jsonPathInput = document.getElementById('jsonPath') as HTMLInputElement;
+  const addMappingButton = document.getElementById('addMapping')!;
+  const mappingsDiv = document.getElementById('mappings')!;
+  const statusDiv = document.getElementById('status')!;
+  const sourceTypeRadios = document.querySelectorAll<HTMLInputElement>('input[name="sourceType"]');
+  const jsonOptions = document.getElementById('jsonOptions')!;
+  const htmlOptions = document.getElementById('htmlOptions')!;
+  const exportButton = document.getElementById('exportConfig')!;
+  const importButton = document.getElementById('importConfig')!;
+  const importFileInput = document.getElementById('importFile') as HTMLInputElement;
 
   exportButton.addEventListener('click', exportConfiguration);
   importButton.addEventListener('click', () => importFileInput.click());
   importFileInput.addEventListener('change', importConfiguration);
 
   sourceTypeRadios.forEach(radio => {
-    radio.addEventListener('change', function() {
+    radio.addEventListener('change', function(this: HTMLInputElement) {
       if (this.value === 'json') {
         jsonOptions.style.display = 'block';
         htmlOptions.style.display = 'none';
@@ -34,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
   addMappingButton.addEventListener('click', function() {
     const urlPattern = urlPatternInput.value.trim();
     const githubRepo = normalizeGitHubUrl(githubRepoInput.value.trim());
-    const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+    const sourceType = (document.querySelector('input[name="sourceType"]:checked') as HTMLInputElement).value as 'json' | 'html';
     const jsonPath = jsonPathInput.value.trim();
     const metaTag = metaTagInput.value.trim();
 
@@ -66,52 +68,16 @@ document.addEventListener('DOMContentLoaded', function() {
     addMapping(githubRepo, urlPattern, sourceType, jsonPath, metaTag);
   });
 
-  function loadMappings() {
+  function loadMappings(): void {
     chrome.storage.sync.get(['urlMappings'], function(result) {
-      const mappings = result.urlMappings || {};
-      const converted = migrateOldFormat(mappings);
-      if (converted !== mappings) {
-        chrome.storage.sync.set({ urlMappings: converted }, function() {
-          displayMappings(converted);
-        });
-      } else {
+      const mappings = parseUrlMappings(result.urlMappings);
+      chrome.storage.sync.set({ urlMappings: mappings }, function() {
         displayMappings(mappings);
-      }
+      });
     });
   }
 
-  // Migrate from old pattern-keyed format to new repo-keyed format
-  function migrateOldFormat(mappings) {
-    if (Object.keys(mappings).length === 0) return mappings;
-
-    // Check if already in new format (values are arrays)
-    const firstValue = Object.values(mappings)[0];
-    if (Array.isArray(firstValue)) {
-      return mappings;
-    }
-
-    // Convert old format to new format
-    const newMappings = {};
-    for (const [pattern, config] of Object.entries(mappings)) {
-      const repo = typeof config === 'string' ? config : config.repo;
-      const sourceType = typeof config === 'object' ? (config.sourceType || 'json') : 'json';
-      const jsonPath = typeof config === 'object' ? (config.jsonPath || '$.version') : '$.version';
-      const metaTag = typeof config === 'object' ? (config.metaTag || '') : '';
-
-      if (!newMappings[repo]) {
-        newMappings[repo] = [];
-      }
-      newMappings[repo].push({
-        pattern,
-        sourceType,
-        jsonPath: sourceType === 'json' ? jsonPath : '',
-        metaTag: sourceType === 'html' ? metaTag : ''
-      });
-    }
-    return newMappings;
-  }
-
-  function displayMappings(mappings) {
+  function displayMappings(mappings: UrlMappings): void {
     mappingsDiv.innerHTML = '';
 
     if (Object.keys(mappings).length === 0) {
@@ -136,10 +102,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       for (const patternConfig of patterns) {
         let sourceInfo = '';
-        if (patternConfig.sourceType === 'html' && patternConfig.metaTag) {
+        if (patternConfig.sourceType === 'html') {
           sourceInfo = `<span class="source-info">HTML meta tag name: <span class="source-value">${patternConfig.metaTag}</span></span>`;
         } else {
-          sourceInfo = `<span class="source-info">JSONPath: <span class="source-value">${patternConfig.jsonPath || '$.version'}</span></span>`;
+          sourceInfo = `<span class="source-info">JSONPath: <span class="source-value">${patternConfig.jsonPath}</span></span>`;
         }
 
         const patternDiv = document.createElement('div');
@@ -160,25 +126,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add delete repo event listeners
     document.querySelectorAll('.delete-repo').forEach(button => {
-      button.addEventListener('click', function() {
-        const repo = this.getAttribute('data-repo');
+      button.addEventListener('click', function(this: HTMLElement) {
+        const repo = this.getAttribute('data-repo')!;
         deleteRepo(repo);
       });
     });
 
     // Add delete pattern event listeners
     document.querySelectorAll('.delete-pattern').forEach(button => {
-      button.addEventListener('click', function() {
-        const repo = this.getAttribute('data-repo');
-        const pattern = this.getAttribute('data-pattern');
+      button.addEventListener('click', function(this: HTMLElement) {
+        const repo = this.getAttribute('data-repo')!;
+        const pattern = this.getAttribute('data-pattern')!;
         deletePattern(repo, pattern);
       });
     });
   }
 
-  function addMapping(githubRepo, urlPattern, sourceType, jsonPath, metaTag) {
+  function addMapping(githubRepo: string, urlPattern: string, sourceType: 'json' | 'html', jsonPath: string, metaTag: string): void {
     chrome.storage.sync.get(['urlMappings'], function(result) {
-      const mappings = migrateOldFormat(result.urlMappings || {});
+      const mappings = parseUrlMappings(result.urlMappings);
 
       if (!mappings[githubRepo]) {
         mappings[githubRepo] = [];
@@ -191,12 +157,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      mappings[githubRepo].push({
-        pattern: urlPattern,
-        sourceType: sourceType,
-        jsonPath: sourceType === 'json' ? jsonPath : '',
-        metaTag: sourceType === 'html' ? metaTag : ''
-      });
+      const newPattern: PatternConfig = sourceType === 'json'
+        ? { pattern: urlPattern, sourceType: 'json', jsonPath }
+        : { pattern: urlPattern, sourceType: 'html', metaTag };
+
+      mappings[githubRepo].push(newPattern);
 
       chrome.storage.sync.set({ urlMappings: mappings }, function() {
         showStatus('Mapping added successfully!', true);
@@ -205,16 +170,16 @@ document.addEventListener('DOMContentLoaded', function() {
         jsonPathInput.value = '$.version';
         metaTagInput.value = '';
         // Reset to JSON option
-        document.querySelector('input[name="sourceType"][value="json"]').checked = true;
+        (document.querySelector('input[name="sourceType"][value="json"]') as HTMLInputElement).checked = true;
         jsonOptions.style.display = 'block';
         htmlOptions.style.display = 'none';
       });
     });
   }
 
-  function deleteRepo(repo) {
+  function deleteRepo(repo: string): void {
     chrome.storage.sync.get(['urlMappings'], function(result) {
-      const mappings = migrateOldFormat(result.urlMappings || {});
+      const mappings = parseUrlMappings(result.urlMappings);
       delete mappings[repo];
 
       chrome.storage.sync.set({ urlMappings: mappings }, function() {
@@ -224,9 +189,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function deletePattern(repo, pattern) {
+  function deletePattern(repo: string, pattern: string): void {
     chrome.storage.sync.get(['urlMappings'], function(result) {
-      const mappings = migrateOldFormat(result.urlMappings || {});
+      const mappings = parseUrlMappings(result.urlMappings);
 
       if (mappings[repo]) {
         mappings[repo] = mappings[repo].filter(p => p.pattern !== pattern);
@@ -244,16 +209,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function normalizeGitHubUrl(url) {
+  function normalizeGitHubUrl(url: string): string {
     return url.replace(/\/+$/, '');
   }
 
-  function isValidGitHubUrl(url) {
+  function isValidGitHubUrl(url: string): boolean {
     const githubRegex = /^https:\/\/github\.com\/[\w\-\.]+\/[\w\-\.]+\/?$/;
     return githubRegex.test(url);
   }
 
-  function showStatus(message, isSuccess) {
+  function showStatus(message: string, isSuccess: boolean): void {
     statusDiv.textContent = message;
     statusDiv.className = isSuccess ? 'status success' : 'status error';
     statusDiv.style.display = 'block';
@@ -263,9 +228,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 3000);
   }
 
-  function exportConfiguration() {
+  function exportConfiguration(): void {
     chrome.storage.sync.get(['urlMappings'], function(result) {
-      const mappings = migrateOldFormat(result.urlMappings || {});
+      const mappings = parseUrlMappings(result.urlMappings);
       const json = JSON.stringify({ urlMappings: mappings }, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -278,25 +243,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function importConfiguration(event) {
-    const file = event.target.files[0];
+  function importConfiguration(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
-        const data = JSON.parse(e.target.result);
-        if (!data.urlMappings || typeof data.urlMappings !== 'object') {
-          showStatus('Invalid configuration file', false);
-          return;
-        }
-
-        chrome.storage.sync.set({ urlMappings: data.urlMappings }, function() {
+        const data = JSON.parse(e.target?.result as string);
+        const validated = parseStorageData(data);
+        chrome.storage.sync.set({ urlMappings: validated.urlMappings }, function() {
           showStatus('Configuration imported!', true);
           loadMappings();
         });
-      } catch (err) {
-        showStatus('Failed to parse configuration file', false);
+      } catch {
+        showStatus('Invalid configuration file format', false);
       }
     };
     reader.readAsText(file);

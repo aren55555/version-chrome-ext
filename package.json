@@ -1,0 +1,34 @@
+{
+  "name": "version-chrome-ext",
+  "version": "1.0.0",
+  "description": "[Link](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb)",
+  "main": "content.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch",
+    "build:release": "node release.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aren55555/version-chrome-ext.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/aren55555/version-chrome-ext/issues"
+  },
+  "homepage": "https://github.com/aren55555/version-chrome-ext#readme",
+  "devDependencies": {
+    "@types/chrome": "^0.1.35",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "zod": "^4.3.5"
+  }
+}

@@ -1,15 +1,25 @@
+import { parseUrlMappings, PatternConfig, UrlMappings } from './schemas';
+
+interface VersionInfo {
+  version: string | null;
+  source: 'json' | 'meta' | null;
+  urlMatched?: boolean;
+  expectedSource?: 'json' | 'html' | null;
+  expectedSelector?: string | null;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  const statusText = document.getElementById('statusText');
-  const githubLinkContainer = document.getElementById('githubLinkContainer');
-  const githubLink = document.getElementById('githubLink');
-  const settingsButton = document.getElementById('settingsButton');
-  
+  const statusText = document.getElementById('statusText')!;
+  const githubLinkContainer = document.getElementById('githubLinkContainer')!;
+  const githubLink = document.getElementById('githubLink') as HTMLAnchorElement;
+  const settingsButton = document.getElementById('settingsButton')!;
+
   settingsButton.addEventListener('click', function() {
     chrome.runtime.openOptionsPage();
   });
 
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {action: 'getVersionInfo'}, function(response) {
+    chrome.tabs.sendMessage(tabs[0].id!, {action: 'getVersionInfo'}, function(response: VersionInfo | undefined) {
       if (chrome.runtime.lastError) {
         statusText.textContent = 'No URL pattern matched for this page';
         statusText.className = 'no-version';
@@ -34,17 +44,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  function displayVersionInfo(version, source) {
+  function displayVersionInfo(version: string, source: 'json' | 'meta' | null): void {
     const sourceLabel = source === 'meta' ? 'from meta tag' : 'from JSON';
     statusText.innerHTML = `<span class="version-detected">Version detected ${sourceLabel}:</span><br><code>${version}</code>`;
-    
+
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      const currentUrl = tabs[0].url;
-      
+      const currentUrl = tabs[0].url!;
+
       chrome.storage.sync.get(['urlMappings'], function(result) {
-        const mappings = result.urlMappings || {};
+        const mappings = parseUrlMappings(result.urlMappings);
         const matchingRepo = findMatchingRepo(currentUrl, mappings);
-        
+
         if (matchingRepo) {
           const commitUrl = `${matchingRepo}/commit/${version}`;
           githubLink.href = commitUrl;
@@ -56,19 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function findMatchingRepo(url, mappings) {
-    // Handle new format: repo -> array of patterns
+  function findMatchingRepo(url: string, mappings: UrlMappings): string | null {
     for (const [repo, patterns] of Object.entries(mappings)) {
-      if (Array.isArray(patterns)) {
-        for (const patternConfig of patterns) {
-          if (url.includes(patternConfig.pattern)) {
-            return repo;
-          }
-        }
-      } else {
-        // Handle old format for backwards compatibility
-        if (url.includes(repo)) {
-          return typeof patterns === 'string' ? patterns : patterns.repo;
+      for (const patternConfig of patterns) {
+        if (url.includes(patternConfig.pattern)) {
+          return repo;
         }
       }
     }

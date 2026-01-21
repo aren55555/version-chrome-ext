@@ -1,6 +1,20 @@
-function inspectPageForVersion(metaTagSelector) {
-  let version = null;
-  let source = null;
+import { parseUrlMappings, PatternConfig, UrlMappings } from './schemas';
+
+interface VersionInfo {
+  version: string | null;
+  source: 'json' | 'meta' | null;
+  urlMatched?: boolean;
+  expectedSource?: 'json' | 'html' | null;
+  expectedSelector?: string | null;
+}
+
+interface ContentMessage {
+  action: 'getVersionInfo' | 'buttonClicked';
+}
+
+function inspectPageForVersion(metaTagSelector: string | null): VersionInfo {
+  let version: string | null = null;
+  let source: 'json' | 'meta' | null = null;
 
   // Try JSON first
   try {
@@ -14,7 +28,7 @@ function inspectPageForVersion(metaTagSelector) {
         version = jsonData.version;
       }
     }
-  } catch (e) {
+  } catch {
     // Not valid JSON, continue
   }
 
@@ -35,35 +49,33 @@ function inspectPageForVersion(metaTagSelector) {
   return { version, source };
 }
 
-function findConfigForUrl(url, mappings) {
-  // Handle new format: repo -> array of patterns
-  for (const [repo, patterns] of Object.entries(mappings)) {
-    if (Array.isArray(patterns)) {
-      for (const patternConfig of patterns) {
-        if (url.includes(patternConfig.pattern)) {
-          return patternConfig;
-        }
-      }
-    } else {
-      // Handle old format for backwards compatibility
-      if (url.includes(repo)) {
-        return typeof patterns === 'object' ? patterns : null;
+function findConfigForUrl(url: string, mappings: UrlMappings): PatternConfig | null {
+  for (const [, patterns] of Object.entries(mappings)) {
+    for (const patternConfig of patterns) {
+      if (url.includes(patternConfig.pattern)) {
+        return patternConfig;
       }
     }
   }
   return null;
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((
+  request: ContentMessage,
+  _sender: chrome.runtime.MessageSender,
+  sendResponse: (response: VersionInfo | { success: boolean }) => void
+): boolean | undefined => {
   if (request.action === 'getVersionInfo') {
     chrome.storage.sync.get(['urlMappings'], function(result) {
-      const mappings = result.urlMappings || {};
+      const mappings = parseUrlMappings(result.urlMappings);
       const config = findConfigForUrl(window.location.href, mappings);
-      const metaTagSelector = config ? config.metaTag : null;
-      const versionInfo = inspectPageForVersion(metaTagSelector);
+      const metaTagSelector = config?.sourceType === 'html' ? config.metaTag : null;
+      const versionInfo: VersionInfo = inspectPageForVersion(metaTagSelector);
       versionInfo.urlMatched = !!config;
       versionInfo.expectedSource = config ? config.sourceType : null;
-      versionInfo.expectedSelector = config ? (config.metaTag || config.jsonPath) : null;
+      versionInfo.expectedSelector = config
+        ? (config.sourceType === 'html' ? config.metaTag : config.jsonPath)
+        : null;
       sendResponse(versionInfo);
     });
     return true; // Keep channel open for async response
@@ -72,12 +84,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'buttonClicked') {
     sendResponse({ success: true });
   }
+
+  return undefined;
 });
 
 chrome.storage.sync.get(['urlMappings'], function(result) {
-  const mappings = result.urlMappings || {};
+  const mappings = parseUrlMappings(result.urlMappings);
   const config = findConfigForUrl(window.location.href, mappings);
-  const metaTagSelector = config ? config.metaTag : null;
+  const metaTagSelector = config?.sourceType === 'html' ? config.metaTag : null;
   const versionInfo = inspectPageForVersion(metaTagSelector);
   if (versionInfo.version) {
     chrome.runtime.sendMessage({
