@@ -14,6 +14,7 @@ for (const entry of entries) {
     build: {
       outDir: 'dist',
       emptyOutDir: entry === 'content',
+      sourcemap: true,
       watch: isWatch ? {} : null,
       lib: {
         entry: resolve(__dirname, `src/${entry}.ts`),
