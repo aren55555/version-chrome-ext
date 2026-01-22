@@ -6,7 +6,7 @@ import { dirname } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isWatch = process.argv.includes('--watch');
 
-const entries = ['content', 'popup', 'options'];
+const entries = ['content', 'popup', 'options', 'background'];
 
 for (const entry of entries) {
   await build({

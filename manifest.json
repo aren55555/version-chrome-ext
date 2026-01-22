@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "App/API Version to GitHub",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Detects version info in JSON pages and creates direct links to GitHub commits. Perfect for API version tracking.",
   "author": "Aren Patel",
   "homepage_url": "https://github.com/aren55555/version-chrome-ext",
@@ -20,6 +20,9 @@
     "default_title": "App/API Version to GitHub"
   },
   "options_page": "options.html",
+  "background": {
+    "service_worker": "dist/background.js"
+  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
