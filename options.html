@@ -186,6 +186,22 @@
   <h1>Version Extension Settings</h1>
 
   <div class="section">
+    <h3>How it works:</h3>
+    <p>This extension detects git commit SHAs from:</p>
+    <ul>
+      <li><strong>JSON pages:</strong> Uses the configured JSONPath to find the git SHA</li>
+      <li><strong>HTML pages:</strong> Looks for a meta tag with the configured name</li>
+    </ul>
+    <p>When a version is detected:</p>
+    <ol>
+      <li>The current URL is matched against your configured patterns</li>
+      <li>A link is created to view that commit on the matching GitHub repository</li>
+      <li>The link is displayed in the extension popup</li>
+    </ol>
+    <p>The GitHub URL will be constructed as: <code>[matching-repo]/commit/[version-value]</code></p>
+  </div>
+
+  <div class="section">
     <h3>URL to GitHub Repository Mappings</h3>
     <p>Configure which GitHub repository to use for specific URLs or URL patterns.</p>
 
@@ -240,22 +256,6 @@
       <button id="importConfig" style="background-color: #007bff;">Import Configuration</button>
       <input type="file" id="importFile" accept=".json" style="display: none;">
     </div>
-  </div>
-
-  <div class="section">
-    <h3>How it works:</h3>
-    <p>This extension detects git commit SHAs from:</p>
-    <ul>
-      <li><strong>JSON pages:</strong> Uses the configured JSONPath to find the git SHA</li>
-      <li><strong>HTML pages:</strong> Looks for a meta tag with the configured name</li>
-    </ul>
-    <p>When a version is detected:</p>
-    <ol>
-      <li>The current URL is matched against your configured patterns</li>
-      <li>A link is created to view that commit on the matching GitHub repository</li>
-      <li>The link is displayed in the extension popup</li>
-    </ol>
-    <p>The GitHub URL will be constructed as: <code>[matching-repo]/commit/[version-value]</code></p>
   </div>
   
   <script src="dist/options.js"></script>

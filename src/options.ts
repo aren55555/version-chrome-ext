@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { parseUrlMappings, StorageDataSchema, UrlMappings, PatternConfig } from './schemas';
+import { parseUrlMappings, STORAGE_DATA_SCHEMA, UrlMappings, PatternConfig } from './schemas';
 
 document.addEventListener('DOMContentLoaded', function() {
   const urlPatternInput = document.getElementById('urlPattern') as HTMLInputElement;
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
     reader.onload = function(e) {
       try {
         const data = JSON.parse(e.target?.result as string);
-        const validated = StorageDataSchema.parse(data);
+        const validated = STORAGE_DATA_SCHEMA.parse(data);
         chrome.storage.sync.set({ urlMappings: validated.urlMappings }, function() {
           showStatus('Configuration imported!', true);
           loadMappings();

@@ -1,93 +1,44 @@
 import { z } from 'zod';
 
-const JsonPatternConfigSchema = z.object({
-  pattern: z.string(),
-  sourceType: z.literal('json'),
-  jsonPath: z.string(),
-});
-
-const HtmlPatternConfigSchema = z.object({
-  pattern: z.string(),
-  sourceType: z.literal('html'),
-  metaTag: z.string(),
-});
-
-export const PatternConfigSchema = z.discriminatedUnion('sourceType', [
-  JsonPatternConfigSchema,
-  HtmlPatternConfigSchema,
+export const PATTERN_CONFIG_SCHEMA = z.discriminatedUnion('sourceType', [
+  z.object({
+    pattern: z.string(),
+    sourceType: z.literal('json'),
+    jsonPath: z.string(),
+  }),
+  z.object({
+    pattern: z.string(),
+    sourceType: z.literal('html'),
+    metaTag: z.string(),
+}),
 ]);
 
-export const UrlMappingsSchema = z.record(z.string(), z.array(PatternConfigSchema));
+export const URL_MAPPINGS_SCHEMA = z.record(z.string(), z.array(PATTERN_CONFIG_SCHEMA));
 
-export const StorageDataSchema = z.object({
-  urlMappings: UrlMappingsSchema,
+export const STORAGE_DATA_SCHEMA = z.object({
+  urlMappings: URL_MAPPINGS_SCHEMA,
 });
 
-export type PatternConfig = z.infer<typeof PatternConfigSchema>;
-export type UrlMappings = z.infer<typeof UrlMappingsSchema>;
-export type StorageData = z.infer<typeof StorageDataSchema>;
-
-// Legacy format schemas for migration
-const LegacyConfigSchema = z.object({
-  repo: z.string().optional(),
-  sourceType: z.enum(['json', 'html']).optional(),
-  jsonPath: z.string().optional(),
-  metaTag: z.string().optional(),
-});
-
-const LegacyMappingsSchema = z.record(z.string(), z.union([z.string(), LegacyConfigSchema]));
-
-export type LegacyConfig = z.infer<typeof LegacyConfigSchema>;
-export type LegacyMappings = z.infer<typeof LegacyMappingsSchema>;
-
-function isLegacyFormat(data: unknown): boolean {
-  if (typeof data !== 'object' || data === null) return false;
-  const values = Object.values(data);
-  if (values.length === 0) return false;
-  return !Array.isArray(values[0]);
-}
-
-function migrateLegacyMappings(legacy: LegacyMappings): UrlMappings {
-  const result: UrlMappings = {};
-  for (const [pattern, config] of Object.entries(legacy)) {
-    const repo = typeof config === 'string' ? config : config.repo!;
-    const sourceType = typeof config === 'object' ? (config.sourceType || 'json') : 'json';
-    const jsonPath = typeof config === 'object' ? (config.jsonPath || '$.version') : '$.version';
-    const metaTag = typeof config === 'object' ? (config.metaTag || '') : '';
-
-    if (!result[repo]) {
-      result[repo] = [];
-    }
-
-    if (sourceType === 'json') {
-      result[repo].push({ pattern, sourceType: 'json', jsonPath });
-    } else {
-      result[repo].push({ pattern, sourceType: 'html', metaTag });
-    }
-  }
-  return result;
-}
+export type PatternConfig = z.infer<typeof PATTERN_CONFIG_SCHEMA>;
+export type UrlMappings = z.infer<typeof URL_MAPPINGS_SCHEMA>;
+export type StorageData = z.infer<typeof STORAGE_DATA_SCHEMA>;
 
 export function parseUrlMappings(data: unknown): UrlMappings {
-  if (!data || typeof data !== 'object') {
-    return {};
-  }
-
-  if (isLegacyFormat(data)) {
-    const legacy = LegacyMappingsSchema.parse(data);
-    return migrateLegacyMappings(legacy);
-  }
-
-  return UrlMappingsSchema.parse(data);
+  const result = URL_MAPPINGS_SCHEMA.safeParse(data);
+  return result.success ? result.data : {};
 }
+
+const DEFAULT: StorageData = { urlMappings: {} };
 
 export function parseStorageData(data: unknown): StorageData {
   if (!data || typeof data !== 'object') {
-    return { urlMappings: {} };
+    return DEFAULT;
   }
 
-  const obj = data as Record<string, unknown>;
-  return {
-    urlMappings: parseUrlMappings(obj.urlMappings),
-  };
+  const result = STORAGE_DATA_SCHEMA.safeParse(data);
+  if (!result.success) {
+    return DEFAULT;
+  }
+
+  return result.data;
 }

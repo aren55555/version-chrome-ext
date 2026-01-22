@@ -5,21 +5,28 @@
   <style>
     body {
       width: 350px;
-      padding: 15px;
+      padding: 5px;
       font-family: Arial, sans-serif;
     }
+    .section {
+      margin: 10px 0;
+    }
     .header {
-      text-align: center;
+      justify-content: center;
       margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 1.5em;
+      margin: 0;
     }
     .content {
       text-align: left;
     }
     .version-info {
-      background-color: #f5f5f5;
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 10px;
+      font-size: 1.2em;
+      /* background-color: #958b8b; */
     }
     .version-detected {
       color: #2e7d32;
@@ -37,11 +44,9 @@
       cursor: pointer;
       font-size: 14px;
       text-decoration: none;
-      display: inline-block;
-      margin-top: 10px;
-    }
-    .github-link:hover {
-      background-color: #0256cc;
+      display: flex;
+      justify-content: center;
+      margin: 0;
     }
     .settings-link {
       background-color: #6c757d;
@@ -53,8 +58,7 @@
       font-size: 12px;
       text-decoration: none;
       display: inline-block;
-      margin-top: 10px;
-      margin-left: 10px;
+      margin: 0 10px; 
     }
     .settings-link:hover {
       background-color: #5a6268;
@@ -63,21 +67,22 @@
       color: #d32f2f;
       font-size: 12px;
     }
+    .github-link:hover {
+      background-color: #0256cc;
+    }
   </style>
 </head>
 <body>
-  <div class="header">
+  <div class="header section">
     <h1>Version Extension</h1>
+    <button id="settingsButton" class="settings-link">Settings</button>
   </div>
   <div class="content">
-    <div id="versionInfo" class="version-info">
+    <div id="versionInfo" class="version-info section">
       <div id="statusText" class="no-version">Checking for version info...</div>
     </div>
-    <div id="githubLinkContainer" style="display: none;">
+    <div id="githubLinkContainer" style="display: none;" class="section">
       <a id="githubLink" class="github-link" href="#" target="_blank">View Commit on GitHub</a>
-    </div>
-    <div>
-      <button id="settingsButton" class="settings-link">Settings</button>
     </div>
   </div>
   <script src="dist/popup.js"></script>

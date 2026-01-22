@@ -46,7 +46,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function displayVersionInfo(version: string, source: 'json' | 'meta' | null): void {
     const sourceLabel = source === 'meta' ? 'from meta tag' : 'from JSON';
-    statusText.innerHTML = `<span class="version-detected">Version detected ${sourceLabel}:</span><br><code>${version}</code>`;
+    statusText.innerHTML = `<div class="version">
+      <span class="version-detected">Version detected ${sourceLabel}:</span>
+      <code>${version}</code>
+    </div>`;
 
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       const currentUrl = tabs[0].url!;
