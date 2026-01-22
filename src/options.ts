@@ -2,72 +2,47 @@ import { z } from 'zod';
 import { parseUrlMappings, STORAGE_DATA_SCHEMA, UrlMappings, PatternConfig } from './schemas';
 
 document.addEventListener('DOMContentLoaded', function() {
-  const urlPatternInput = document.getElementById('urlPattern') as HTMLInputElement;
-  const githubRepoInput = document.getElementById('githubRepo') as HTMLInputElement;
-  const metaTagInput = document.getElementById('metaTagName') as HTMLInputElement;
-  const jsonPathInput = document.getElementById('jsonPath') as HTMLInputElement;
-  const addMappingButton = document.getElementById('addMapping')!;
-  const mappingsDiv = document.getElementById('mappings')!;
+  const addRepoBtn = document.getElementById('addRepoBtn')!;
+  const addRepoForm = document.getElementById('addRepoForm')!;
+  const newRepoUrlInput = document.getElementById('newRepoUrl') as HTMLInputElement;
+  const saveRepoBtn = document.getElementById('saveRepoBtn')!;
+  const cancelRepoBtn = document.getElementById('cancelRepoBtn')!;
+  const repoList = document.getElementById('repoList')!;
   const statusDiv = document.getElementById('status')!;
-  const sourceTypeRadios = document.querySelectorAll<HTMLInputElement>('input[name="sourceType"]');
-  const jsonOptions = document.getElementById('jsonOptions')!;
-  const htmlOptions = document.getElementById('htmlOptions')!;
   const exportButton = document.getElementById('exportConfig')!;
   const importButton = document.getElementById('importConfig')!;
   const importFileInput = document.getElementById('importFile') as HTMLInputElement;
+
+  let currentEditingMatcher: { repo: string; pattern: string } | null = null;
 
   exportButton.addEventListener('click', exportConfiguration);
   importButton.addEventListener('click', () => importFileInput.click());
   importFileInput.addEventListener('change', importConfiguration);
 
-  sourceTypeRadios.forEach(radio => {
-    radio.addEventListener('change', function(this: HTMLInputElement) {
-      if (this.value === 'json') {
-        jsonOptions.style.display = 'block';
-        htmlOptions.style.display = 'none';
-      } else {
-        jsonOptions.style.display = 'none';
-        htmlOptions.style.display = 'block';
-      }
-    });
+  addRepoBtn.addEventListener('click', () => {
+    addRepoForm.classList.add('visible');
+    newRepoUrlInput.focus();
   });
 
-  loadMappings();
+  cancelRepoBtn.addEventListener('click', () => {
+    addRepoForm.classList.remove('visible');
+    newRepoUrlInput.value = '';
+  });
 
-  addMappingButton.addEventListener('click', function() {
-    const urlPattern = urlPatternInput.value.trim();
-    const githubRepo = normalizeGitHubUrl(githubRepoInput.value.trim());
-    const sourceType = (document.querySelector('input[name="sourceType"]:checked') as HTMLInputElement).value as 'json' | 'html';
-    const jsonPath = jsonPathInput.value.trim();
-    const metaTag = metaTagInput.value.trim();
-
-    if (!githubRepo) {
+  saveRepoBtn.addEventListener('click', () => {
+    const repoUrl = normalizeGitHubUrl(newRepoUrlInput.value.trim());
+    if (!repoUrl) {
       showStatus('Please enter a GitHub repository URL', false);
       return;
     }
-
-    if (!isValidGitHubUrl(githubRepo)) {
+    if (!isValidGitHubUrl(repoUrl)) {
       showStatus('Please enter a valid GitHub repository URL', false);
       return;
     }
-
-    if (!urlPattern) {
-      showStatus('Please enter a URL pattern', false);
-      return;
-    }
-
-    if (sourceType === 'json' && !jsonPath) {
-      showStatus('Please enter a JSONPath', false);
-      return;
-    }
-
-    if (sourceType === 'html' && !metaTag) {
-      showStatus('Please enter a Meta Tag Name', false);
-      return;
-    }
-
-    addMapping(githubRepo, urlPattern, sourceType, jsonPath, metaTag);
+    addRepository(repoUrl);
   });
+
+  loadMappings();
 
   function loadMappings(): void {
     chrome.storage.sync.get(['urlMappings'], function(result) {
@@ -79,101 +54,329 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function displayMappings(mappings: UrlMappings): void {
-    mappingsDiv.innerHTML = '';
+    repoList.innerHTML = '';
 
     if (Object.keys(mappings).length === 0) {
-      mappingsDiv.innerHTML = '<p style="color: #666; font-style: italic;">No mappings configured yet.</p>';
+      repoList.innerHTML = '<div class="empty-state">No repositories configured yet. Click "Add Repository" to get started.</div>';
       return;
     }
 
     for (const [repo, patterns] of Object.entries(mappings)) {
-      const repoDiv = document.createElement('div');
-      repoDiv.className = 'repo-group';
+      const repoCard = createRepoCard(repo, patterns);
+      repoList.appendChild(repoCard);
+    }
+  }
 
-      const repoHeader = document.createElement('div');
-      repoHeader.className = 'repo-header';
-      repoHeader.innerHTML = `
-        <a href="${repo}" target="_blank" class="repo-url">${repo}</a>
-        <button class="delete-repo" data-repo="${repo}">Delete All</button>
-      `;
-      repoDiv.appendChild(repoHeader);
+  function createRepoCard(repo: string, patterns: PatternConfig[]): HTMLElement {
+    const card = document.createElement('div');
+    card.className = 'repo-card';
+    card.dataset.repo = repo;
 
-      const patternsDiv = document.createElement('div');
-      patternsDiv.className = 'patterns-list';
+    const header = document.createElement('div');
+    header.className = 'repo-header';
+    header.innerHTML = `
+      <a href="${repo}" target="_blank" class="repo-url">${repo}</a>
+      <div class="repo-actions">
+        <button class="btn btn-secondary add-matcher-btn">+ Add Matcher</button>
+        <button class="btn btn-danger delete-repo-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete</button>
+      </div>
+    `;
+    card.appendChild(header);
 
-      for (const patternConfig of patterns) {
-        let sourceInfo = '';
-        if (patternConfig.sourceType === 'html') {
-          sourceInfo = `<span class="source-info">HTML meta tag name: <span class="source-value">${patternConfig.metaTag}</span></span>`;
-        } else {
-          sourceInfo = `<span class="source-info">JSONPath: <span class="source-value">${patternConfig.jsonPath}</span></span>`;
-        }
+    const matcherList = document.createElement('div');
+    matcherList.className = 'matcher-list';
 
-        const patternDiv = document.createElement('div');
-        patternDiv.className = 'pattern-item';
-        patternDiv.innerHTML = `
-          <div class="pattern-info">
-            <span class="pattern-text">${patternConfig.pattern}</span>
-            ${sourceInfo}
-          </div>
-          <button class="delete-pattern" data-repo="${repo}" data-pattern="${patternConfig.pattern}">×</button>
-        `;
-        patternsDiv.appendChild(patternDiv);
+    if (patterns.length === 0) {
+      matcherList.innerHTML = '<div style="padding: 12px; color: #888; font-size: 13px;">No matchers yet. Add a matcher to start detecting versions.</div>';
+    } else {
+      for (const pattern of patterns) {
+        const matcherItem = createMatcherItem(repo, pattern);
+        matcherList.appendChild(matcherItem);
       }
-
-      repoDiv.appendChild(patternsDiv);
-      mappingsDiv.appendChild(repoDiv);
     }
 
-    // Add delete repo event listeners
-    document.querySelectorAll('.delete-repo').forEach(button => {
-      button.addEventListener('click', function(this: HTMLElement) {
-        const repo = this.getAttribute('data-repo')!;
-        deleteRepo(repo);
+    card.appendChild(matcherList);
+
+    // Add matcher form (hidden)
+    const addMatcherForm = createMatcherForm(repo, null);
+    card.appendChild(addMatcherForm);
+
+    // Event listeners
+    header.querySelector('.add-matcher-btn')!.addEventListener('click', () => {
+      closeAllForms();
+      addMatcherForm.classList.add('visible');
+      (addMatcherForm.querySelector('.pattern-input') as HTMLInputElement).focus();
+    });
+
+    header.querySelector('.delete-repo-btn')!.addEventListener('click', () => {
+      deleteRepo(repo);
+    });
+
+    return card;
+  }
+
+  function createMatcherItem(repo: string, pattern: PatternConfig): HTMLElement {
+    const item = document.createElement('div');
+    item.className = 'matcher-item';
+    item.dataset.pattern = pattern.pattern;
+
+    const sourceInfo = pattern.sourceType === 'html'
+      ? `HTML meta: <span class="matcher-source-value">${pattern.metaTag}</span>`
+      : `JSONPath: <span class="matcher-source-value">${pattern.jsonPath}</span>`;
+
+    item.innerHTML = `
+      <div class="matcher-info">
+        <div class="matcher-pattern">${pattern.pattern}</div>
+        <div class="matcher-source">${sourceInfo}</div>
+      </div>
+      <div class="matcher-actions">
+        <button class="btn btn-icon delete-matcher-btn" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+      </div>
+    `;
+
+    item.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('.delete-matcher-btn')) {
+        return;
+      }
+      openEditForm(repo, pattern);
+    });
+
+    item.querySelector('.delete-matcher-btn')!.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deletePattern(repo, pattern.pattern);
+    });
+
+    return item;
+  }
+
+  function createMatcherForm(repo: string, existingPattern: PatternConfig | null): HTMLElement {
+    const form = document.createElement('div');
+    form.className = 'edit-form';
+    const isEdit = existingPattern !== null;
+    const formId = isEdit ? `edit-${repo}-${existingPattern.pattern}` : `add-${repo}`;
+
+    const sourceType = existingPattern?.sourceType || 'json';
+    const jsonPath = existingPattern?.sourceType === 'json' ? existingPattern.jsonPath : '$.version';
+    const metaTag = existingPattern?.sourceType === 'html' ? existingPattern.metaTag : '';
+
+    form.innerHTML = `
+      <div class="form-group">
+        <label>URL Pattern <span class="required">*</span></label>
+        <input type="text" class="pattern-input" placeholder="api.example.com" value="${existingPattern?.pattern || ''}">
+        <div class="hint">Match URLs containing this text</div>
+      </div>
+      <div class="form-group">
+        <label>Source Type <span class="required">*</span></label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="sourceType-${formId}" value="json" ${sourceType === 'json' ? 'checked' : ''}>
+            JSON
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="sourceType-${formId}" value="html" ${sourceType === 'html' ? 'checked' : ''}>
+            HTML
+          </label>
+        </div>
+      </div>
+      <div class="form-group json-options" ${sourceType === 'html' ? 'style="display:none"' : ''}>
+        <label>JSONPath <span class="required">*</span></label>
+        <input type="text" class="jsonpath-input" value="${jsonPath}">
+        <div class="hint">Path to the git SHA field (e.g., $.version or $.git.commit)</div>
+      </div>
+      <div class="form-group html-options" ${sourceType === 'json' ? 'style="display:none"' : ''}>
+        <label>Meta Tag Name <span class="required">*</span></label>
+        <input type="text" class="metatag-input" placeholder="git-sha" value="${metaTag}">
+        <div class="hint">Looks for &lt;meta name="..." content="abc123..."&gt;</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary save-matcher-btn">${isEdit ? 'Update' : 'Add'} Matcher</button>
+        <button class="btn btn-secondary cancel-matcher-btn">Cancel</button>
+      </div>
+    `;
+
+    const jsonOpts = form.querySelector('.json-options') as HTMLElement;
+    const htmlOpts = form.querySelector('.html-options') as HTMLElement;
+    const radios = form.querySelectorAll<HTMLInputElement>(`input[name="sourceType-${formId}"]`);
+
+    radios.forEach(radio => {
+      radio.addEventListener('change', function() {
+        if (this.value === 'json') {
+          jsonOpts.style.display = '';
+          htmlOpts.style.display = 'none';
+        } else {
+          jsonOpts.style.display = 'none';
+          htmlOpts.style.display = '';
+        }
       });
     });
 
-    // Add delete pattern event listeners
-    document.querySelectorAll('.delete-pattern').forEach(button => {
-      button.addEventListener('click', function(this: HTMLElement) {
-        const repo = this.getAttribute('data-repo')!;
-        const pattern = this.getAttribute('data-pattern')!;
-        deletePattern(repo, pattern);
+    form.querySelector('.save-matcher-btn')!.addEventListener('click', () => {
+      const patternInput = form.querySelector('.pattern-input') as HTMLInputElement;
+      const jsonPathInput = form.querySelector('.jsonpath-input') as HTMLInputElement;
+      const metaTagInput = form.querySelector('.metatag-input') as HTMLInputElement;
+      const selectedType = (form.querySelector(`input[name="sourceType-${formId}"]:checked`) as HTMLInputElement).value as 'json' | 'html';
+
+      const pattern = patternInput.value.trim();
+      const jsonPathVal = jsonPathInput.value.trim();
+      const metaTagVal = metaTagInput.value.trim();
+
+      if (!pattern) {
+        showStatus('Please enter a URL pattern', false);
+        return;
+      }
+
+      if (selectedType === 'json' && !jsonPathVal) {
+        showStatus('Please enter a JSONPath', false);
+        return;
+      }
+
+      if (selectedType === 'html' && !metaTagVal) {
+        showStatus('Please enter a Meta Tag Name', false);
+        return;
+      }
+
+      if (isEdit) {
+        updateMatcher(repo, existingPattern.pattern, pattern, selectedType, jsonPathVal, metaTagVal);
+      } else {
+        addMatcher(repo, pattern, selectedType, jsonPathVal, metaTagVal);
+      }
+    });
+
+    form.querySelector('.cancel-matcher-btn')!.addEventListener('click', () => {
+      form.classList.remove('visible');
+      currentEditingMatcher = null;
+      document.querySelectorAll('.matcher-item.editing').forEach(el => el.classList.remove('editing'));
+    });
+
+    return form;
+  }
+
+  function openEditForm(repo: string, pattern: PatternConfig): void {
+    closeAllForms();
+
+    const repoCard = document.querySelector(`.repo-card[data-repo="${CSS.escape(repo)}"]`);
+    if (!repoCard) return;
+
+    const matcherItem = repoCard.querySelector(`.matcher-item[data-pattern="${CSS.escape(pattern.pattern)}"]`);
+    if (matcherItem) {
+      matcherItem.classList.add('editing');
+    }
+
+    // Remove any existing edit form for this pattern
+    const existingEditForm = repoCard.querySelector('.edit-form.pattern-edit');
+    if (existingEditForm) {
+      existingEditForm.remove();
+    }
+
+    const editForm = createMatcherForm(repo, pattern);
+    editForm.classList.add('visible', 'pattern-edit');
+
+    // Insert after the matcher list
+    const matcherList = repoCard.querySelector('.matcher-list');
+    if (matcherList && matcherList.nextSibling) {
+      repoCard.insertBefore(editForm, matcherList.nextSibling);
+    } else {
+      repoCard.appendChild(editForm);
+    }
+
+    currentEditingMatcher = { repo, pattern: pattern.pattern };
+  }
+
+  function closeAllForms(): void {
+    document.querySelectorAll('.edit-form.visible').forEach(form => {
+      form.classList.remove('visible');
+    });
+    document.querySelectorAll('.edit-form.pattern-edit').forEach(form => {
+      form.remove();
+    });
+    document.querySelectorAll('.matcher-item.editing').forEach(el => {
+      el.classList.remove('editing');
+    });
+    currentEditingMatcher = null;
+  }
+
+  function addRepository(repoUrl: string): void {
+    chrome.storage.sync.get(['urlMappings'], function(result) {
+      const mappings = parseUrlMappings(result.urlMappings);
+
+      if (mappings[repoUrl]) {
+        showStatus('This repository already exists', false);
+        return;
+      }
+
+      mappings[repoUrl] = [];
+
+      chrome.storage.sync.set({ urlMappings: mappings }, function() {
+        showStatus('Repository added!', true);
+        addRepoForm.classList.remove('visible');
+        newRepoUrlInput.value = '';
+        loadMappings();
       });
     });
   }
 
-  function addMapping(githubRepo: string, urlPattern: string, sourceType: 'json' | 'html', jsonPath: string, metaTag: string): void {
+  function addMatcher(repo: string, pattern: string, sourceType: 'json' | 'html', jsonPath: string, metaTag: string): void {
     chrome.storage.sync.get(['urlMappings'], function(result) {
       const mappings = parseUrlMappings(result.urlMappings);
 
-      if (!mappings[githubRepo]) {
-        mappings[githubRepo] = [];
+      if (!mappings[repo]) {
+        mappings[repo] = [];
       }
 
-      // Check for duplicate pattern
-      const existingPattern = mappings[githubRepo].find(p => p.pattern === urlPattern);
-      if (existingPattern) {
+      const exists = mappings[repo].find(p => p.pattern === pattern);
+      if (exists) {
         showStatus('This URL pattern already exists for this repository', false);
         return;
       }
 
       const newPattern: PatternConfig = sourceType === 'json'
-        ? { pattern: urlPattern, sourceType: 'json', jsonPath }
-        : { pattern: urlPattern, sourceType: 'html', metaTag };
+        ? { pattern, sourceType: 'json', jsonPath }
+        : { pattern, sourceType: 'html', metaTag };
 
-      mappings[githubRepo].push(newPattern);
+      mappings[repo].push(newPattern);
 
       chrome.storage.sync.set({ urlMappings: mappings }, function() {
-        showStatus('Mapping added successfully!', true);
+        showStatus('Matcher added!', true);
+        closeAllForms();
         loadMappings();
-        urlPatternInput.value = '';
-        jsonPathInput.value = '$.version';
-        metaTagInput.value = '';
-        // Reset to JSON option
-        (document.querySelector('input[name="sourceType"][value="json"]') as HTMLInputElement).checked = true;
-        jsonOptions.style.display = 'block';
-        htmlOptions.style.display = 'none';
+      });
+    });
+  }
+
+  function updateMatcher(repo: string, oldPattern: string, newPattern: string, sourceType: 'json' | 'html', jsonPath: string, metaTag: string): void {
+    chrome.storage.sync.get(['urlMappings'], function(result) {
+      const mappings = parseUrlMappings(result.urlMappings);
+
+      if (!mappings[repo]) {
+        showStatus('Repository not found', false);
+        return;
+      }
+
+      const index = mappings[repo].findIndex(p => p.pattern === oldPattern);
+      if (index === -1) {
+        showStatus('Matcher not found', false);
+        return;
+      }
+
+      // Check if new pattern already exists (if pattern changed)
+      if (oldPattern !== newPattern) {
+        const exists = mappings[repo].find(p => p.pattern === newPattern);
+        if (exists) {
+          showStatus('This URL pattern already exists for this repository', false);
+          return;
+        }
+      }
+
+      const updatedPattern: PatternConfig = sourceType === 'json'
+        ? { pattern: newPattern, sourceType: 'json', jsonPath }
+        : { pattern: newPattern, sourceType: 'html', metaTag };
+
+      mappings[repo][index] = updatedPattern;
+
+      chrome.storage.sync.set({ urlMappings: mappings }, function() {
+        showStatus('Matcher updated!', true);
+        closeAllForms();
+        loadMappings();
       });
     });
   }
@@ -184,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
       delete mappings[repo];
 
       chrome.storage.sync.set({ urlMappings: mappings }, function() {
-        showStatus('Repository removed successfully!', true);
+        showStatus('Repository deleted!', true);
         loadMappings();
       });
     });
@@ -197,14 +400,13 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mappings[repo]) {
         mappings[repo] = mappings[repo].filter(p => p.pattern !== pattern);
 
-        // Remove repo if no patterns left
         if (mappings[repo].length === 0) {
           delete mappings[repo];
         }
       }
 
       chrome.storage.sync.set({ urlMappings: mappings }, function() {
-        showStatus('Pattern deleted successfully!', true);
+        showStatus('Matcher deleted!', true);
         loadMappings();
       });
     });

@@ -4,260 +4,441 @@
   <meta charset="utf-8">
   <title>Version Extension Options</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      max-width: 600px;
+    * {
+      box-sizing: border-box;
     }
-    .section {
-      margin-bottom: 20px;
-      padding: 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+    .left-pane {
+      width: 320px;
+      background: #fff;
+      border-right: 1px solid #e0e0e0;
+      padding: 24px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .left-pane-content {
+      flex: 1;
+    }
+    .left-pane-footer {
+      border-top: 1px solid #e0e0e0;
+      padding-top: 16px;
+      margin-top: 16px;
+    }
+    .right-pane {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 20px 0;
+      color: #333;
+    }
+    h1 a {
+      color: inherit;
+      text-decoration: none;
+    }
+    h1 a::after {
+      content: "↗";
+      font-size: 14px;
+      opacity: 0.5;
+      margin-left: 6px;
+    }
+    h1 a:hover {
+      text-decoration: underline;
+    }
+    h2 {
+      font-size: 16px;
+      margin: 0 0 12px 0;
+      color: #333;
+    }
+    h3 {
+      font-size: 14px;
+      margin: 0 0 8px 0;
+      color: #666;
+    }
+    p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 12px 0;
+    }
+    ul, ol {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+      padding-left: 20px;
+      margin: 0 0 16px 0;
+    }
+    code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    /* Right pane styles */
+    .config-section {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-header h2 {
+      margin: 0;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: #0366d6;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #0256b9;
+    }
+    .btn-secondary {
+      background: #e9ecef;
+      color: #495057;
+    }
+    .btn-secondary:hover {
+      background: #dee2e6;
+    }
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #c82333;
+    }
+    .btn-icon {
+      padding: 8px 12px;
+      background: transparent;
+      color: #666;
+    }
+    .btn-icon:hover {
+      background: #f0f0f0;
+    }
+    .delete-matcher-btn {
+      color: #dc3545;
+    }
+    .delete-matcher-btn:hover {
+      background: #f8d7da;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
     }
     label {
       display: block;
-      margin-top: 16px;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    label:first-child {
-      margin-top: 0;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .status {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 3px;
-      display: none;
-    }
-    .status.success {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    .status.error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    .example {
-      font-style: italic;
-      color: #666;
-      font-size: 0.9em;
-      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
     }
     .required {
       color: #dc3545;
     }
-    .repo-group {
-      background-color: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      margin-bottom: 12px;
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #0366d6;
+    }
+    .hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .radio-group {
+      display: flex;
+      gap: 20px;
+    }
+    .radio-label {
+      display: inline-flex;
+      align-items: center;
+      font-weight: normal;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .radio-label input[type="radio"] {
+      margin-right: 6px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    /* Hidden forms */
+    .add-form {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      padding-bottom: 16px;
+      border-top: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 16px;
+    }
+    .add-form.visible {
+      display: block;
+    }
+
+    /* Repository list */
+    .repo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: #888;
+    }
+    .repo-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
       overflow: hidden;
     }
     .repo-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 12px;
-      background-color: #e9ecef;
-      border-bottom: 1px solid #dee2e6;
+      padding: 12px 16px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
     }
     .repo-url {
-      font-weight: bold;
-      color: #0366d6;
+      font-weight: 600;
+      color: #333;
       text-decoration: none;
+      font-size: 14px;
       word-break: break-all;
-      line-height: 1.2;
-      font-size: 15px;
+    }
+    .repo-url::after {
+      content: "↗";
+      font-size: 11px;
+      opacity: 0.5;
+      margin-left: 4px;
     }
     .repo-url:hover {
       text-decoration: underline;
     }
-    .delete-repo {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 11px;
+    .repo-actions {
+      display: flex;
+      gap: 4px;
       flex-shrink: 0;
-      margin-left: 10px;
-      margin-top: 0;
+      margin-left: 12px;
     }
-    .delete-repo:hover {
-      background-color: #c82333;
+
+    /* Matcher list */
+    .matcher-list {
+      padding: 8px;
     }
-    .patterns-list {
-      padding: 8px 12px;
-    }
-    .pattern-item {
+    .matcher-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 8px;
-      margin-bottom: 4px;
-      background-color: white;
-      border: 1px solid #e9ecef;
-      border-radius: 3px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
     }
-    .pattern-item:last-child {
-      margin-bottom: 0;
+    .matcher-item:hover {
+      background: #f5f5f5;
     }
-    .pattern-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+    .matcher-item.editing {
+      background: #e8f4fd;
     }
-    .pattern-text {
-      color: #495057;
+    .matcher-info {
+      flex: 1;
+    }
+    .matcher-pattern {
       font-family: monospace;
       font-size: 14px;
+      color: #333;
     }
-    .source-info {
-      color: #6c757d;
+    .matcher-source {
       font-size: 12px;
+      color: #888;
+      margin-top: 2px;
     }
-    .source-value {
+    .matcher-source-value {
       font-family: monospace;
     }
-    .delete-pattern {
-      background-color: transparent;
-      color: #dc3545;
-      border: none;
-      padding: 2px 6px;
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      margin-top: 0;
-    }
-    .delete-pattern:hover {
-      color: #a71d2a;
-      background-color: transparent;
-    }
-    .mapping-input {
-      border-top: 1px solid #dee2e6;
-      padding-top: 15px;
-      margin-top: 15px;
-    }
-    .radio-group {
+    .matcher-actions {
       display: flex;
-      gap: 20px;
-      margin-top: 5px;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.15s;
     }
-    .radio-label {
-      display: inline-flex;
-      align-items: center;
-      font-weight: normal;
-      margin: 0;
-      cursor: pointer;
+    .matcher-item:hover .matcher-actions {
+      opacity: 1;
     }
-    .radio-label input[type="radio"] {
-      margin-right: 6px;
+
+    /* Edit form inline */
+    .edit-form {
+      display: none;
+      padding: 16px;
+      background: #f8f9fa;
+      border-top: 1px solid #e0e0e0;
     }
-    .source-options {
-      margin-top: 10px;
+    .edit-form.visible {
+      display: block;
+    }
+
+    /* Status messages */
+    .status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+
+    /* Import/Export */
+    .import-export {
+      display: flex;
+      gap: 8px;
+    }
+    .import-export .btn {
+      flex: 1;
+    }
+    .author-link {
+      border-top: 1px solid #e0e0e0;
+      margin-top: 16px;
+      padding-top: 12px;
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+    }
+    .author-link a {
+      color: #888;
+      text-decoration: underline;
+    }
+    .author-link a:hover {
+      color: #666;
     }
   </style>
 </head>
 <body>
-  <h1>Version Extension Settings</h1>
+  <div class="container">
+    <div class="left-pane">
+      <div class="left-pane-content">
+        <h1><a href="https://chromewebstore.google.com/detail/json-version-to-github/jdaeepijmnhdooonimlnbfeghgefiphn" target="_blank">Version Extension</a></h1>
 
-  <div class="section">
-    <h3>How it works:</h3>
-    <p>This extension detects git commit SHAs from:</p>
-    <ul>
-      <li><strong>JSON pages:</strong> Uses the configured JSONPath to find the git SHA</li>
-      <li><strong>HTML pages:</strong> Looks for a meta tag with the configured name</li>
-    </ul>
-    <p>When a version is detected:</p>
-    <ol>
-      <li>The current URL is matched against your configured patterns</li>
-      <li>A link is created to view that commit on the matching GitHub repository</li>
-      <li>The link is displayed in the extension popup</li>
-    </ol>
-    <p>The GitHub URL will be constructed as: <code>[matching-repo]/commit/[version-value]</code></p>
-  </div>
+        <h3>How it works</h3>
+        <p>This extension detects git commit SHAs from web pages and creates direct links to view them on GitHub.</p>
 
-  <div class="section">
-    <h3>URL to GitHub Repository Mappings</h3>
-    <p>Configure which GitHub repository to use for specific URLs or URL patterns.</p>
+        <h3>Supported sources</h3>
+        <ul>
+          <li><strong>JSON pages:</strong> Uses JSONPath to find the git SHA in JSON content</li>
+          <li><strong>HTML pages:</strong> Looks for a meta tag with the configured name</li>
+        </ul>
 
-    <div id="mappings">
-      <!-- Mappings will be added here dynamically -->
+        <h3>How to use</h3>
+        <ol>
+          <li>Add a GitHub repository URL</li>
+          <li>Add one or more URL matchers for that repo</li>
+          <li>Visit a page that matches your pattern</li>
+          <li>Click the extension icon to see the commit link</li>
+        </ol>
+
+        <p>The GitHub URL will be constructed as:<br><code>[repo]/commit/[version]</code></p>
+      </div>
+
+      <div class="left-pane-footer">
+        <div class="import-export">
+          <button id="exportConfig" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Export</button>
+          <button id="importConfig" class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Import</button>
+          <input type="file" id="importFile" accept=".json" style="display: none;">
+        </div>
+        <div class="author-link">
+          Made by <a href="https://arenpatel.com" target="_blank">arenpatel.com</a>
+        </div>
+      </div>
     </div>
 
-    <div class="mapping-input">
-      <label for="githubRepo">GitHub Repository URL <span class="required">*</span></label>
-      <input type="text" id="githubRepo" placeholder="https://github.com/username/repository" required>
-      <div class="example">Example: https://github.com/octocat/Hello-World</div>
+    <div class="right-pane">
+      <div class="config-section">
+        <div class="section-header">
+          <h2>Repositories</h2>
+          <button id="addRepoBtn" class="btn btn-primary">+ Add Repository</button>
+        </div>
 
-      <label for="urlPattern">URL Pattern <span class="required">*</span></label>
-      <input type="text" id="urlPattern" placeholder="api.example.com" required>
-      <div class="example">Match URLs containing this text (e.g., "api.example.com" matches "https://api.example.com/version")</div>
+        <!-- Add Repository Form (hidden by default) -->
+        <div id="addRepoForm" class="add-form">
+          <div class="form-group">
+            <label for="newRepoUrl">GitHub Repository URL <span class="required">*</span></label>
+            <input type="text" id="newRepoUrl" placeholder="https://github.com/username/repository">
+            <div class="hint">Example: https://github.com/octocat/Hello-World</div>
+          </div>
+          <div class="form-actions">
+            <button id="saveRepoBtn" class="btn btn-primary">Add Repository</button>
+            <button id="cancelRepoBtn" class="btn btn-secondary">Cancel</button>
+          </div>
+        </div>
 
-      <label>Source Type <span class="required">*</span></label>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" name="sourceType" value="json" checked>
-          JSON
-        </label>
-        <label class="radio-label">
-          <input type="radio" name="sourceType" value="html">
-          HTML
-        </label>
+        <!-- Repository List -->
+        <div id="repoList" class="repo-list">
+          <!-- Repos will be added here dynamically -->
+        </div>
       </div>
 
-      <div id="jsonOptions" class="source-options">
-        <label for="jsonPath">JSONPath <span class="required">*</span></label>
-        <input type="text" id="jsonPath" value="$.version">
-        <div class="example">JSONPath to the git SHA field (e.g., "$.version" or "$.git.commit")</div>
-      </div>
-
-      <div id="htmlOptions" class="source-options" style="display: none;">
-        <label for="metaTagName">Meta Tag Name <span class="required">*</span></label>
-        <input type="text" id="metaTagName" placeholder="git-sha">
-        <div class="example">Looks for &lt;meta name="git-sha" content="abc123..."&gt;</div>
-      </div>
-
-      <button id="addMapping">Add Mapping</button>
     </div>
   </div>
-  
+
   <div id="status" class="status"></div>
 
-  <div class="section">
-    <h3>Import / Export</h3>
-    <p>Share your configuration with others or back it up.</p>
-    <div style="display: flex; gap: 10px;">
-      <button id="exportConfig">Export Configuration</button>
-      <button id="importConfig" style="background-color: #007bff;">Import Configuration</button>
-      <input type="file" id="importFile" accept=".json" style="display: none;">
-    </div>
-  </div>
-  
   <script src="dist/options.js"></script>
 </body>
 </html>
