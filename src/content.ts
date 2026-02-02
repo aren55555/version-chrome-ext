@@ -12,7 +12,24 @@ interface ContentMessage {
   action: 'getVersionInfo' | 'buttonClicked';
 }
 
-function inspectPageForVersion(metaTagSelector: string | null): VersionInfo {
+function evaluateJsonPath(data: unknown, jsonPath: string): string | null {
+  // Handle simple JSONPath expressions like "$.gitSha" or "$.foo.bar"
+  // Strip leading "$." if present
+  const path = jsonPath.startsWith('$.') ? jsonPath.slice(2) : jsonPath;
+  const parts = path.split('.');
+
+  let current: unknown = data;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== 'object') {
+      return null;
+    }
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  return typeof current === 'string' ? current : null;
+}
+
+function inspectPageForVersion(metaTagSelector: string | null, jsonPath: string | null): VersionInfo {
   let version: string | null = null;
   let source: 'json' | 'meta' | null = null;
 
@@ -24,8 +41,14 @@ function inspectPageForVersion(metaTagSelector: string | null): VersionInfo {
       const jsonData = JSON.parse(bodyText);
       source = 'json';
 
-      if (typeof jsonData === 'object' && jsonData !== null && jsonData.version) {
-        version = jsonData.version;
+      if (typeof jsonData === 'object' && jsonData !== null) {
+        if (jsonPath) {
+          // Use configured JSONPath
+          version = evaluateJsonPath(jsonData, jsonPath);
+        } else {
+          // Fall back to default "version" field
+          version = typeof jsonData.version === 'string' ? jsonData.version : null;
+        }
       }
     }
   } catch {
@@ -70,7 +93,8 @@ chrome.runtime.onMessage.addListener((
       const mappings = parseUrlMappings(result.urlMappings);
       const config = findConfigForUrl(window.location.href, mappings);
       const metaTagSelector = config?.sourceType === 'html' ? config.metaTag : null;
-      const versionInfo: VersionInfo = inspectPageForVersion(metaTagSelector);
+      const jsonPath = config?.sourceType === 'json' ? config.jsonPath : null;
+      const versionInfo: VersionInfo = inspectPageForVersion(metaTagSelector, jsonPath);
       versionInfo.urlMatched = !!config;
       versionInfo.expectedSource = config ? config.sourceType : null;
       versionInfo.expectedSelector = config
@@ -92,7 +116,8 @@ chrome.storage.sync.get(['urlMappings'], function(result) {
   const mappings = parseUrlMappings(result.urlMappings);
   const config = findConfigForUrl(window.location.href, mappings);
   const metaTagSelector = config?.sourceType === 'html' ? config.metaTag : null;
-  const versionInfo = inspectPageForVersion(metaTagSelector);
+  const jsonPath = config?.sourceType === 'json' ? config.jsonPath : null;
+  const versionInfo = inspectPageForVersion(metaTagSelector, jsonPath);
   if (versionInfo.version) {
     chrome.runtime.sendMessage({
       action: 'versionDetected',

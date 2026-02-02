@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "App/API Version to GitHub",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "description": "Instantly jump from deployed version strings to their GitHub commits. Great for tracking what's running in production.",
   "author": "Aren Patel",
   "homepage_url": "https://github.com/aren55555/version-chrome-ext",
