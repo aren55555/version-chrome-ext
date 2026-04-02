@@ -1,62 +1,43 @@
-# JSON Version to GitHub Chrome Extension
+# App/API Version to GitHub Chrome Extension
 
-[Link](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb)
+[![Available in the Chrome Web Store](https://raw.githubusercontent.com/GoogleChrome/webstore-docs/master/images/ChromeWebStore_Badge_v2_206x58.png)](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb)
 
 ![Screenshot](docs/screen.jpg)
 
-A Chrome extension that detects version information in JSON pages and creates direct links to GitHub commits. Perfect for API version tracking and development workflow automation.
-
-## Features
-
-- Automatically detects JSON pages with `version` fields
-- Creates direct GitHub commit links based on version values (assumed to be git commit SHAs)
-- Configurable URL-to-repository mappings through a settings interface
-- Clean, minimal popup interface for quick access
-
-## How It Works
-
-1. The extension scans web pages for JSON content
-2. When a `version` field is detected, it extracts the value
-
-```json
-{
-  "version": "<sha here>",
-  ...
-}
-```
-
-3. Based on your configured URL patterns, it matches the current page to a GitHub repository
-4. Creates a direct link to the specific commit: `[repo]/commit/[version]`
+Detects the git SHA of what's deployed on a page and gives you a one-click link to that commit on GitHub.
 
 ## Installation
 
-1. Clone or download this repository
-2. Open Chrome and go to `chrome://extensions/`
-3. Enable "Developer mode"
-4. Click "Load unpacked" and select the extension directory
+Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb), or load unpacked from source:
+
+```
+npm install && npm run build
+```
+
+Then go to `chrome://extensions/` → Enable Developer mode → Load unpacked.
 
 ## Configuration
 
-1. Click the extension icon in your browser toolbar
-2. Click "Settings" to configure URL mappings
-3. Add URL patterns and their corresponding GitHub repositories
+Click the extension icon → **Settings** → **Add Repository** with a GitHub repo URL (e.g. `https://github.com/org/repo`).
 
-### Example Configuration
+Then add a **matcher** to tell the extension where to find the SHA on a given page:
 
-- **URL Pattern**: `api.example.com`
-- **GitHub Repository**: `https://github.com/username/repo`
+**JSON page** (e.g. an API `/version` endpoint):
+- URL Pattern: `api.example.com/version`
+- Source Type: JSON
+- JSONPath: `$.version` or `$.build.sha`
 
-This will match any URL containing "api.example.com" and create GitHub links to the repository.
+```json
+{ "version": "a1b2c3d..." }
+```
 
-## File Structure
+**HTML page** (SHA embedded in a meta tag):
+- URL Pattern: `app.example.com`
+- Source Type: HTML
+- Meta Tag Name: `git-sha`
 
-- `manifest.json` - Extension configuration and permissions
-- `content.js` - Page scanning and version detection logic
-- `popup.html/js` - Extension popup interface
-- `options.html/js` - Settings and configuration interface
+```html
+<meta name="git-sha" content="a1b2c3d...">
+```
 
-## Use Cases
-
-- Track API versions during development
-- Quick access to specific commit information
-- Development workflow automation for teams using version-tagged deployments
+URL patterns match by substring. You can export/import your full config from the Settings page.
