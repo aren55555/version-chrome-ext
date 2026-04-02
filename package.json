@@ -25,7 +25,7 @@
   "homepage": "https://github.com/aren55555/version-chrome-ext#readme",
   "devDependencies": {
     "@types/chrome": "^0.1.35",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vite": "^8.0.3"
   },
   "dependencies": {
