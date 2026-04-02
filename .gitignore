@@ -1,5 +1,6 @@
 dist/
 node_modules/
+bun.lock
 version-chrome-ext-v*.zip
 
 # Compiled TypeScript (source is in src/)
