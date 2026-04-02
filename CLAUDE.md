@@ -4,48 +4,64 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Chrome extension that detects `version` fields in JSON pages and creates direct links to GitHub commits. Users configure URL-to-repository mappings, and when visiting a JSON page with a version field, the extension provides a one-click link to view that commit on GitHub.
+A Chrome extension (MV3) that detects version/git-sha strings in JSON pages or HTML meta tags, then provides a one-click link to the corresponding GitHub commit. Users configure URL pattern → GitHub repo mappings via the options page.
 
 ## Development
 
-**No build system** - This is a zero-dependency Chrome extension using vanilla JavaScript and HTML. Load directly as an unpacked extension.
+**Build system**: TypeScript + Vite. Source files are in `src/`, compiled output goes to `dist/`.
+
+```
+npm run build          # compile src/ → dist/
+npm run watch          # compile with file watching
+npm run build:release  # build + zip for Chrome Web Store upload
+```
 
 ### Loading the Extension
 
-1. Navigate to `chrome://extensions/`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select this directory
+1. Run `npm run build` to produce `dist/`
+2. Navigate to `chrome://extensions/`, enable Developer mode
+3. Click "Load unpacked", select this directory
 
-### Testing Changes
-
-After modifying files, click the refresh icon on the extension card in `chrome://extensions/` to reload.
+After modifying `src/` files, run `npm run build` then click the refresh icon on the extension card.
 
 ## Architecture
 
 ```
-content.js      → Runs on all pages, parses JSON for "version" field
-popup.html/js   → Extension icon click UI, shows version + GitHub link
-options.html/js → Settings page for URL-to-repo mappings
-manifest.json   → Chrome extension manifest (v3)
+src/
+  content.ts    → Injected into all pages; extracts version from JSON or HTML meta tags
+  popup.ts      → Extension popup UI; queries content script, resolves GitHub link
+  options.ts    → Settings page; manages URL pattern → repo mappings via CRUD UI
+  background.ts → Service worker; manages toolbar badge (✓ indicator)
+  schemas.ts    → Zod schemas and types shared across all scripts
 ```
+
+`popup.html` and `options.html` are static HTML files that load the corresponding compiled scripts from `dist/`.
 
 ### Data Flow
 
-1. **content.js** scans page text as JSON, extracts `version` field
-2. **popup.js** queries content script, looks up URL pattern in storage
-3. Matches current URL against stored patterns to find GitHub repo
-4. Constructs link: `{repo}/commit/{version}`
+1. **content.ts** runs on page load: reads storage, finds a matching `PatternConfig` for the current URL, extracts the version string (from JSON body or HTML `<meta>` tag), and sends a `versionDetected` message to the background worker to set the badge.
+2. **popup.ts** on open: sends `getVersionInfo` to the content script, which re-reads storage and returns `VersionInfo`. The popup then looks up the GitHub repo URL from storage and constructs `{repo}/commit/{version}`.
+3. **background.ts** listens for `versionDetected` messages and sets a green ✓ badge on the tab. Clears the badge on tab navigation.
 
-### Storage
+### Storage Schema
 
-Uses `chrome.storage.sync` with structure:
-```javascript
-{ urlMappings: { "api.example.com": "https://github.com/org/repo" } }
+Defined in `src/schemas.ts` using Zod. The storage key is `urlMappings`:
+
+```typescript
+// Storage root
+{ urlMappings: UrlMappings }
+
+// UrlMappings: repo URL → array of PatternConfig
+{ "https://github.com/org/repo": PatternConfig[] }
+
+// PatternConfig is a discriminated union on sourceType:
+{ pattern: string, sourceType: 'json', jsonPath: string }  // e.g. jsonPath: "$.version"
+{ pattern: string, sourceType: 'html', metaTag: string }   // e.g. metaTag: "git-sha"
 ```
 
-### Communication
+URL matching uses simple substring matching (`url.includes(pattern)`). JSONPath supports simple dot-notation (`$.version`, `$.git.commit`).
 
-Content script and popup communicate via Chrome messaging API:
-- `getVersionInfo` action: popup requests version from content script
-- Response: `{ version, isJson }`
+### Chrome Messaging
+
+- `getVersionInfo` (popup → content): returns `VersionInfo` — version string, source type, whether the URL matched a configured pattern, and which selector was expected
+- `versionDetected` (content → background): triggers badge update
