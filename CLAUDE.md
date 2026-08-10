@@ -10,22 +10,57 @@ A Chrome extension (MV3) that detects version/git-sha strings in JSON pages or H
 
 **Build system**: [WXT](https://wxt.dev/) (TypeScript + Vite under the hood). Entrypoints live in `entrypoints/`, shared code in `utils/`, static assets in `public/`. Compiled output goes to `.output/chrome-mv3/`.
 
+**Tool management**: [Mise](https://mise.jdx.dev/) provides reproducible versions of `bun`, `just`, and `op` (1Password CLI). Run `mise install` once.
+
+**Task runner**: Use `just` for common tasks:
+
 ```
-bun run dev            # dev mode with auto-reload
-bun run build          # compile → .output/chrome-mv3/
-bun run build:release  # build + zip for Chrome Web Store upload
-                       # (.output/version-chrome-ext-v<version>.zip)
+just dev            # dev mode with auto-reload
+just build          # compile → .output/chrome-mv3/
+just build-release  # build + zip for Chrome Web Store
+just type-check     # type checking
+just submit         # build, zip, and submit to Chrome Web Store (requires 1Password auth)
+just clean          # remove build artifacts
 ```
 
 ### Loading the Extension
 
-1. Run `bun run build` to produce `.output/chrome-mv3/`
+1. Run `just build` (or `just dev` for auto-reload)
 2. Navigate to `chrome://extensions/`, enable Developer mode
 3. Click "Load unpacked", select the `.output/chrome-mv3/` directory
 
-After modifying source files, re-run `bun run build` (or keep `bun run dev` running), then click the refresh icon on the extension card.
+After modifying source files, the dev server rebuilds automatically. Click the refresh icon on the extension card.
 
-Type checking: `bunx tsc --noEmit` (root `tsconfig.json` extends the generated `.wxt/tsconfig.json`; run `bunx wxt prepare` first if `.wxt/` doesn't exist).
+### Versioning
+
+When bumping the version, update **both** locations:
+- `package.json` — `version` field
+- `wxt.config.ts` — `manifest.version` field
+
+The version is used in the release ZIP filename and Chrome Web Store submission.
+
+## Publishing to Chrome Web Store
+
+Publication is automated via `wxt submit` (which uses [publish-extension](https://www.npmjs.com/publish-browser-extension)) with Google Service Account authentication through 1Password.
+
+**Setup (one-time):**
+1. Create a Google Cloud Service Account for your project
+2. Enable the Chrome Web Store API
+3. Generate a JSON key from the service account
+4. Add the service account as a collaborator in your extension's Chrome Developer Dashboard (with Owner role)
+5. Upload the JSON key to 1Password under "Private" vault, item "Chrome Web Store API"
+
+**Publishing:**
+```
+just submit    # builds, zips, and submits to Chrome Web Store
+```
+
+The submission script (`scripts/submit.sh`) reads the service account JSON from 1Password using `op run`, so secrets never appear in shell history or logs. Configuration is in `.env.submit` (extension ID and Publisher ID) — this file is gitignored and safe to store public IDs.
+
+Check submission status:
+```
+op run -- bun run submit status
+```
 
 ## Architecture
 
@@ -72,6 +107,8 @@ Defined in `utils/schemas.ts` using Zod. The storage key is `urlMappings`:
 ```
 
 URL matching uses simple substring matching (`url.includes(pattern)`). JSONPath supports simple dot-notation (`$.version`, `$.git.commit`).
+
+**Backward compatibility**: The schema is stable. Upgrades from v3.2.0 → v4.0.0 require no data migration—users' stored mappings persist unchanged.
 
 ### Chrome Messaging
 
