@@ -1,4 +1,4 @@
-import { parseUrlMappings, PatternConfig, UrlMappings } from './schemas';
+import { parseUrlMappings, type PatternConfig, type UrlMappings } from '@/utils/schemas';
 
 interface VersionInfo {
   version: string | null;
@@ -83,46 +83,51 @@ function findConfigForUrl(url: string, mappings: UrlMappings): PatternConfig | n
   return null;
 }
 
-chrome.runtime.onMessage.addListener((
-  request: ContentMessage,
-  _sender: chrome.runtime.MessageSender,
-  sendResponse: (response: VersionInfo | { success: boolean }) => void
-): boolean | undefined => {
-  if (request.action === 'getVersionInfo') {
+export default defineContentScript({
+  matches: ['<all_urls>'],
+  main() {
+    chrome.runtime.onMessage.addListener((
+      request: ContentMessage,
+      _sender: chrome.runtime.MessageSender,
+      sendResponse: (response: VersionInfo | { success: boolean }) => void
+    ): boolean | undefined => {
+      if (request.action === 'getVersionInfo') {
+        chrome.storage.sync.get(['urlMappings'], function(result) {
+          const mappings = parseUrlMappings(result.urlMappings);
+          const config = findConfigForUrl(window.location.href, mappings);
+          const metaTagSelector = config?.sourceType === 'html' ? config.metaTag : null;
+          const jsonPath = config?.sourceType === 'json' ? config.jsonPath : null;
+          const versionInfo: VersionInfo = inspectPageForVersion(metaTagSelector, jsonPath);
+          versionInfo.urlMatched = !!config;
+          versionInfo.expectedSource = config ? config.sourceType : null;
+          versionInfo.expectedSelector = config
+            ? (config.sourceType === 'html' ? config.metaTag : config.jsonPath)
+            : null;
+          sendResponse(versionInfo);
+        });
+        return true; // Keep channel open for async response
+      }
+
+      if (request.action === 'buttonClicked') {
+        sendResponse({ success: true });
+      }
+
+      return undefined;
+    });
+
     chrome.storage.sync.get(['urlMappings'], function(result) {
       const mappings = parseUrlMappings(result.urlMappings);
       const config = findConfigForUrl(window.location.href, mappings);
       const metaTagSelector = config?.sourceType === 'html' ? config.metaTag : null;
       const jsonPath = config?.sourceType === 'json' ? config.jsonPath : null;
-      const versionInfo: VersionInfo = inspectPageForVersion(metaTagSelector, jsonPath);
-      versionInfo.urlMatched = !!config;
-      versionInfo.expectedSource = config ? config.sourceType : null;
-      versionInfo.expectedSelector = config
-        ? (config.sourceType === 'html' ? config.metaTag : config.jsonPath)
-        : null;
-      sendResponse(versionInfo);
+      const versionInfo = inspectPageForVersion(metaTagSelector, jsonPath);
+      if (versionInfo.version) {
+        chrome.runtime.sendMessage({
+          action: 'versionDetected',
+          version: versionInfo.version,
+          url: window.location.href
+        });
+      }
     });
-    return true; // Keep channel open for async response
-  }
-
-  if (request.action === 'buttonClicked') {
-    sendResponse({ success: true });
-  }
-
-  return undefined;
-});
-
-chrome.storage.sync.get(['urlMappings'], function(result) {
-  const mappings = parseUrlMappings(result.urlMappings);
-  const config = findConfigForUrl(window.location.href, mappings);
-  const metaTagSelector = config?.sourceType === 'html' ? config.metaTag : null;
-  const jsonPath = config?.sourceType === 'json' ? config.jsonPath : null;
-  const versionInfo = inspectPageForVersion(metaTagSelector, jsonPath);
-  if (versionInfo.version) {
-    chrome.runtime.sendMessage({
-      action: 'versionDetected',
-      version: versionInfo.version,
-      url: window.location.href
-    });
-  }
+  },
 });

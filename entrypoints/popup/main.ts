@@ -1,4 +1,4 @@
-import { parseUrlMappings, PatternConfig, UrlMappings } from './schemas';
+import { parseUrlMappings, type PatternConfig, type UrlMappings } from '@/utils/schemas';
 
 interface VersionInfo {
   version: string | null;
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id!, {action: 'getVersionInfo'}, function(response: VersionInfo | undefined) {
+    chrome.tabs.sendMessage(tabs[0]!.id!, {action: 'getVersionInfo'}, function(response: VersionInfo | undefined) {
       if (chrome.runtime.lastError) {
         statusText.textContent = 'No URL pattern matched for this page';
         statusText.className = 'no-version';
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>`;
 
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      const currentUrl = tabs[0].url!;
+      const currentUrl = tabs[0]!.url!;
 
       chrome.storage.sync.get(['urlMappings'], function(result) {
         const mappings = parseUrlMappings(result.urlMappings);

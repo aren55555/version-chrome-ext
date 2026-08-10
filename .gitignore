@@ -1,8 +1,6 @@
-dist/
 node_modules/
 version-chrome-ext-v*.zip
 
-# Compiled TypeScript (source is in src/)
-/content.js
-/popup.js
-/options.js
+# WXT
+.output/
+.wxt/

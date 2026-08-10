@@ -11,10 +11,10 @@ Detects the git SHA of what's deployed on a page and gives you a one-click link 
 Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb), or load unpacked from source:
 
 ```
-npm install && npm run build
+bun install && bun run build
 ```
 
-Then go to `chrome://extensions/` → Enable Developer mode → Load unpacked.
+Then go to `chrome://extensions/` → Enable Developer mode → Load unpacked → select the `.output/chrome-mv3/` directory. Built with [WXT](https://wxt.dev/); use `bun run dev` for development with auto-reload.
 
 ## Configuration
 

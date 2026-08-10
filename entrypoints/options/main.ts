@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { parseUrlMappings, STORAGE_DATA_SCHEMA, UrlMappings, PatternConfig } from './schemas';
+import { parseUrlMappings, STORAGE_DATA_SCHEMA, type UrlMappings, type PatternConfig } from '@/utils/schemas';
 
 document.addEventListener('DOMContentLoaded', function() {
   const addRepoBtn = document.getElementById('addRepoBtn')!;

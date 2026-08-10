@@ -1,15 +1,15 @@
 {
   "name": "version-chrome-ext",
-  "version": "1.0.0",
+  "version": "4.0.0",
   "description": "[Link](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb)",
-  "main": "content.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "build": "bun build.js",
-    "watch": "bun build.js --watch",
-    "build:release": "bun release.js"
+    "dev": "wxt",
+    "build": "wxt build",
+    "build:release": "wxt zip",
+    "postinstall": "wxt prepare"
   },
   "repository": {
     "type": "git",
@@ -26,7 +26,7 @@
   "devDependencies": {
     "@types/chrome": "^0.1.35",
     "typescript": "^6.0.2",
-    "vite": "^8.2.1"
+    "wxt": "^0.21.3"
   },
   "dependencies": {
     "zod": "^4.3.5"
