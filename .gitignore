@@ -4,3 +4,6 @@ version-chrome-ext-v*.zip
 # WXT
 .output/
 .wxt/
+
+# 1Password
+.env.submit

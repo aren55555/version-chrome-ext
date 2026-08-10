@@ -16,9 +16,9 @@ build-release:
 type-check:
     bunx tsc --noEmit
 
-# Submit to Chrome Web Store
+# Submit to Chrome Web Store (requires 1Password CLI)
 submit: build-release
-    bun run submit
+    op run -- bash scripts/submit.sh
 
 # Clean build artifacts
 clean:
