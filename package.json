@@ -9,6 +9,7 @@
     "dev": "wxt",
     "build": "wxt build",
     "build:release": "wxt zip",
+    "submit": "wxt submit",
     "postinstall": "wxt prepare"
   },
   "repository": {
