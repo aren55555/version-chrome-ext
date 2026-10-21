@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const sourceType = existingPattern?.sourceType || 'json';
     const jsonPath = existingPattern?.sourceType === 'json' ? existingPattern.jsonPath : '$.version';
-    const metaTag = existingPattern?.sourceType === 'html' ? existingPattern.metaTag : '';
+    const metaTag = existingPattern?.sourceType === 'html' ? existingPattern.metaTag : 'version';
 
     form.innerHTML = `
       <div class="form-group">
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="form-group html-options" ${sourceType === 'json' ? 'style="display:none"' : ''}>
         <label>Meta Tag Name <span class="required">*</span></label>
-        <input type="text" class="metatag-input" placeholder="git-sha" value="${metaTag}">
+        <input type="text" class="metatag-input" placeholder="version" value="${metaTag}">
         <div class="hint">Looks for &lt;meta name="..." content="abc123..."&gt;</div>
       </div>
       <div class="form-actions">

@@ -34,10 +34,10 @@ Then add a **matcher** to tell the extension where to find the SHA on a given pa
 **HTML page** (SHA embedded in a meta tag):
 - URL Pattern: `app.example.com`
 - Source Type: HTML
-- Meta Tag Name: `git-sha`
+- Meta Tag Name: `version` or `git-sha`
 
 ```html
-<meta name="git-sha" content="a1b2c3d...">
+<meta name="version" content="a1b2c3d...">
 ```
 
 URL patterns match by substring. You can export/import your full config from the Settings page.

@@ -1,6 +1,6 @@
 {
   "name": "version-chrome-ext",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "[Link](https://chromewebstore.google.com/detail/jdaeepijmnhdooonimlnbfeghgefiphn?utm_source=item-share-cb)",
   "directories": {
     "doc": "docs"
@@ -10,7 +10,7 @@
     "build": "wxt build",
     "build:release": "wxt zip",
     "submit": "wxt submit",
-    "postinstall": "wxt prepare"
+    "postinstall": "bun --bun run wxt prepare"
   },
   "repository": {
     "type": "git",

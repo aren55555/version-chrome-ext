@@ -12,6 +12,11 @@ A Chrome extension (MV3) that detects version/git-sha strings in JSON pages or H
 
 **Tool management**: [Mise](https://mise.jdx.dev/) provides reproducible versions of `bun`, `just`, and `op` (1Password CLI). Run `mise install` once.
 
+No Node install is required: `wxt`, `vite`, `tsc`, and `publish-extension` all ship
+`#!/usr/bin/env node` shebangs, so every invocation passes `--bun` (`bun --bun run ...`,
+`bunx --bun tsc`) to run them on bun's runtime instead. Keep the flag when adding scripts
+or recipes — without it the command looks for a `node` binary that isn't there.
+
 **Task runner**: Use `just` for common tasks:
 
 ```
@@ -103,7 +108,7 @@ Defined in `utils/schemas.ts` using Zod. The storage key is `urlMappings`:
 
 // PatternConfig is a discriminated union on sourceType:
 { pattern: string, sourceType: 'json', jsonPath: string }  // e.g. jsonPath: "$.version"
-{ pattern: string, sourceType: 'html', metaTag: string }   // e.g. metaTag: "git-sha"
+{ pattern: string, sourceType: 'html', metaTag: string }   // e.g. metaTag: "version"
 ```
 
 URL matching uses simple substring matching (`url.includes(pattern)`). JSONPath supports simple dot-notation (`$.version`, `$.git.commit`).

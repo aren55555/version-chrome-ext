@@ -3,7 +3,7 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   manifest: {
     name: 'App/API Version to GitHub',
-    version: '4.0.0',
+    version: '4.1.0',
     description:
       "Instantly jump from deployed version strings to their GitHub commits. Great for tracking what's running in production.",
     // Chrome accepts a string here; WXT's manifest type comes from Firefox's schema
